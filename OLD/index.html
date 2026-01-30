@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>World of Influence - Prototype</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- CORE VARIABLES --- */
+        :root {
+            --growth-green: #00C805;
+            --fintech-slate: #1e293b;
+            --brand-blue: #3B82F6;
+            --waze-bg: #f3f4f6;
+            --rarity-common: #10b981;
+            --rarity-rare: #3B82F6;
+            --rarity-epic: #8b5cf6;
+            --rarity-legendary: #f59e0b;
+        }
+
+        /* --- RESET & BASE --- */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        body { margin: 0; padding: 0; height: 100vh; overflow: hidden; font-family: 'Nunito', sans-serif; background: var(--waze-bg); }
+
+        /* --- MAP LAYER --- */
+        #map { height: 100%; width: 100%; z-index: 1; }
+        .leaflet-container { background: #e5e7eb; } /* Fallback color */
+
+        /* --- HUD: TOP BAR (Fintech Style) --- */
+        .hud-top {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            padding: 16px 20px;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            pointer-events: none;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 100%);
+        }
+
+        .avatar-group {
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .avatar-circle {
+            width: 48px; height: 48px;
+            background: white;
+            border: 2px solid var(--fintech-slate);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            font-size: 20px; color: var(--fintech-slate);
+        }
+
+        .mayor-badge {
+            background: var(--fintech-slate);
+            color: white;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .balance-card {
+            pointer-events: auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            text-align: right;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .balance-label {
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .balance-amount {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--growth-green);
+            letter-spacing: -0.5px;
+        }
+
+        /* --- GLOBAL TICKER (Jackpot) --- */
+        .news-ticker {
+            position: absolute;
+            top: 80px; left: 50%; transform: translateX(-50%);
+            background: rgba(30, 41, 59, 0.9);
+            color: #fbbf24;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+            z-index: 900;
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+            display: flex; gap: 8px; align-items: center;
+        }
+        .news-ticker.show { opacity: 1; }
+
+        /* --- BOTTOM NAV & FAB --- */
+        .bottom-dock {
+            position: absolute;
+            bottom: 30px; left: 20px; right: 20px;
+            height: 70px;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            z-index: 1000;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 10px;
+        }
+
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center;
+            color: #94a3b8; font-size: 10px; font-weight: 700; gap: 4px;
+            width: 50px; cursor: pointer; transition: 0.2s;
+        }
+        .nav-item.active { color: var(--brand-blue); }
+        .nav-item i { font-size: 20px; }
+
+        .fab-wrapper { position: relative; top: -25px; }
+        .fab-main {
+            width: 64px; height: 64px;
+            background: var(--fintech-slate);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 24px;
+            box-shadow: 0 10px 25px rgba(30, 41, 59, 0.4);
+            border: 4px solid white;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .fab-main:active { transform: scale(0.95); }
+
+        /* --- MODALS (Minting, Upgrades, Drops) --- */
+        .modal-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4); z-index: 2000;
+            display: none; justify-content: center; align-items: flex-end;
+            backdrop-filter: blur(4px);
+        }
+        
+        .modal-sheet {
+            background: white;
+            width: 100%; max-width: 500px;
+            border-top-left-radius: 24px; border-top-right-radius: 24px;
+            padding: 30px 24px 50px;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
+            animation: slideUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            text-align: center;
+        }
+
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        /* Minting Animation UI */
+        .minting-loader {
+            width: 60px; height: 60px;
+            border: 4px solid #f3f3f3; border-top: 4px solid var(--growth-green);
+            border-radius: 50%; margin: 0 auto 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .modal-title { font-size: 22px; font-weight: 800; color: var(--fintech-slate); margin-bottom: 8px; }
+        .modal-subtitle { color: #64748b; font-size: 14px; margin-bottom: 24px; line-height: 1.5; }
+        
+        .btn-primary {
+            background: var(--fintech-slate); color: white; width: 100%;
+            padding: 16px; border-radius: 16px; border: none;
+            font-weight: 700; font-size: 16px; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .btn-secondary {
+            background: #f1f5f9; color: var(--fintech-slate);
+            margin-top: 12px;
+        }
+        
+        /* Rarity Styles */
+        .rarity-tag {
+            display: inline-block; padding: 4px 12px; border-radius: 20px;
+            font-size: 12px; font-weight: 800; text-transform: uppercase;
+            margin-bottom: 10px; letter-spacing: 1px;
+        }
+        .tag-common { background: #d1fae5; color: var(--rarity-common); }
+        .tag-rare { background: #dbeafe; color: var(--rarity-rare); }
+        .tag-epic { background: #ede9fe; color: var(--rarity-epic); }
+        .tag-legendary { background: #fef3c7; color: var(--rarity-legendary); }
+
+        /* --- MAP ELEMENTS --- */
+        /* Grid Squares */
+        .grid-unowned { 
+            fill: #94a3b8; fill-opacity: 0.1; 
+            stroke: #cbd5e1; stroke-width: 1; stroke-opacity: 0.4;
+        }
+        .grid-owned { 
+            stroke: white; stroke-width: 2; stroke-opacity: 0.8; 
+            fill-opacity: 0.6; 
+        }
+
+        /* 3D Asset Icons on Map */
+        .map-asset-icon {
+            display: flex !important;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 16px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+            margin-top: -10px !important; /* Visual offset for "3D" feel */
+        }
+
+        /* Supply Drop Icon */
+        .supply-drop-marker {
+            font-size: 28px;
+            filter: drop-shadow(0 5px 15px rgba(251, 191, 36, 0.4));
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <div class="news-ticker" id="global-ticker">
+        <i class="fas fa-bullhorn"></i>
+        <span id="ticker-text">User AustinKing found a Monument!</span>
+    </div>
+
+    <div class="hud-top">
+        <div class="avatar-group">
+            <div class="avatar-circle">
+                <i class="fas fa-user-astronaut"></i>
+            </div>
+            <div class="mayor-badge">Mayor</div>
+        </div>
+        <div class="balance-card">
+            <div class="balance-label">Total Yield</div>
+            <div class="balance-amount" id="balance-display">$0.0000000</div>
+        </div>
+    </div>
+
+    <div class="bottom-dock">
+        <div class="nav-item">
+            <i class="fas fa-store"></i>
+            <span>Market</span>
+        </div>
+        <div class="nav-item">
+            <i class="fas fa-chart-line"></i>
+            <span>Stats</span>
+        </div>
+        
+        <div class="fab-wrapper">
+            <div class="fab-main" onclick="scanArea()">
+                <i class="fas fa-crosshairs"></i>
+            </div>
+        </div>
+
+        <div class="nav-item active">
+            <i class="fas fa-map"></i>
+            <span>Map</span>
+        </div>
+        <div class="nav-item">
+            <i class="fas fa-cog"></i>
+            <span>Settings</span>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-buy">
+        <div class="modal-sheet">
+            <div style="font-size: 40px; margin-bottom: 10px;">📍</div>
+            <div class="modal-title">Acquire Parcel?</div>
+            <div class="modal-subtitle">
+                Coordinates: <span style="font-family: 'Roboto Mono';">30.2672, -97.7431</span><br>
+                Price: <strong>100 INK Cash</strong>
+            </div>
+            <button class="btn-primary" onclick="startMintingProcess()">Confirm Purchase</button>
+            <button class="btn-primary btn-secondary" onclick="closeModals()">Cancel</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-minting">
+        <div class="modal-sheet">
+            <div class="minting-loader"></div>
+            <div class="modal-title" id="minting-status">Verifying Ledger...</div>
+            <div class="modal-subtitle">Securing your digital asset on the chain.</div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-reveal">
+        <div class="modal-sheet">
+            <div id="reveal-badge" class="rarity-tag tag-common">Common</div>
+            <div class="modal-title" id="reveal-title">Standard Plot</div>
+            <div class="modal-subtitle" id="reveal-desc">
+                Rent: $0.0000001 / sec<br>
+                Visual: Well-kept Lawn
+            </div>
+            <div style="font-size: 60px; margin: 10px 0;" id="reveal-icon">🌱</div>
+            <button class="btn-primary" onclick="closeModals()">Add to Portfolio</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-upgrade">
+        <div class="modal-sheet">
+            <div class="modal-title">Property Renovation</div>
+            <div class="modal-subtitle">Upgrade this asset to increase yield and prestige.</div>
+            
+            <div style="display: flex; gap: 10px; overflow-x: auto; margin-bottom: 20px; padding: 10px 0;">
+                <div onclick="selectUpgrade('rare')" style="border: 2px solid #e2e8f0; padding: 10px; border-radius: 12px; min-width: 80px;">
+                    <div style="font-size: 24px;">🌳</div>
+                    <div style="font-size: 10px; font-weight: bold; margin-top: 5px;">Oak Tree</div>
+                </div>
+                <div onclick="selectUpgrade('epic')" style="border: 2px solid #e2e8f0; padding: 10px; border-radius: 12px; min-width: 80px;">
+                    <div style="font-size: 24px;">⛲</div>
+                    <div style="font-size: 10px; font-weight: bold; margin-top: 5px;">Fountain</div>
+                </div>
+                <div onclick="selectUpgrade('legendary')" style="border: 2px solid #e2e8f0; padding: 10px; border-radius: 12px; min-width: 80px;">
+                    <div style="font-size: 24px;">🗽</div>
+                    <div style="font-size: 10px; font-weight: bold; margin-top: 5px;">Statue</div>
+                </div>
+            </div>
+
+            <button class="btn-primary" style="background: var(--brand-blue)" onclick="confirmUpgrade()">Renovate (250 Cash)</button>
+            <button class="btn-primary btn-secondary" onclick="closeModals()">Close</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-drop">
+        <div class="modal-sheet">
+            <div style="font-size: 50px; margin-bottom: 10px;">💼</div>
+            <div class="modal-title">Supply Case</div>
+            <div class="modal-subtitle">You found a secure asset case.</div>
+            <button class="btn-primary" onclick="openSupplyCase()">Break Lock</button>
+            <button class="btn-primary btn-secondary" onclick="closeModals()">Ignore</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // --- GAME STATE ---
+        const state = {
+            balance: 104.5000000,
+            rentPerSec: 0.0000000, // Calculated dynamically
+            parcels: [], // { id, lat, lng, rarity, asset }
+            selectedParcelId: null,
+            userLocation: [30.2672, -97.7431] // Austin, TX
+        };
+
+        // --- CONSTANTS ---
+        const PARCEL_SIZE = 0.0001; // Approx 10 meters
+        const RARITY = {
+            COMMON: { id: 'common', name: 'Standard', mult: 1, color: '#10b981', icon: 'fa-seedling', emoji: '🌱' },
+            RARE: { id: 'rare', name: 'Prime', mult: 1.5, color: '#3B82F6', icon: 'fa-tree', emoji: '🌳' },
+            EPIC: { id: 'epic', name: 'Estate', mult: 2, color: '#8b5cf6', icon: 'fa-water', emoji: '⛲' },
+            LEGENDARY: { id: 'legendary', name: 'Monument', mult: 4, color: '#f59e0b', icon: 'fa-crown', emoji: '👑' }
+        };
+
+        // --- MAP INIT (Waze Style) ---
+        // Using CartoDB Positron for clean white/grey look
+        const map = L.map('map', { zoomControl: false, attributionControl: false }).setView(state.userLocation, 19);
+        
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            maxZoom: 20
+        }).addTo(map);
+
+        // User Avatar (Floating Arrow)
+        const userIcon = L.divIcon({
+            className: 'user-marker',
+            html: `<div style="
+                width: 24px; height: 24px; 
+                background: var(--brand-blue); 
+                border: 3px solid white; 
+                border-radius: 50%; 
+                box-shadow: 0 4px 15px rgba(59, 130, 246, 0.5);
+                display:flex; align-items:center; justify-content:center; color:white; font-size:10px;">
+                <i class="fas fa-location-arrow"></i>
+            </div>`,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+        });
+        L.marker(state.userLocation, {icon: userIcon}).addTo(map);
+
+
+        // --- GRID SYSTEM ---
+        const gridGroup = L.layerGroup().addTo(map);
+        const assetsGroup = L.layerGroup().addTo(map);
+
+        function drawGrid() {
+            gridGroup.clearLayers();
+            const [lat, lng] = state.userLocation;
+            const radius = 4; // 9x9 grid
+
+            for (let x = -radius; x <= radius; x++) {
+                for (let y = -radius; y <= radius; y++) {
+                    const cLat = lat + (x * PARCEL_SIZE);
+                    const cLng = lng + (y * PARCEL_SIZE);
+                    const id = `${x}_${y}`;
+                    
+                    // Check ownership
+                    const owned = state.parcels.find(p => p.id === id);
+                    
+                    let color = '#94a3b8'; // Grey (Unowned)
+                    let className = 'grid-unowned';
+                    let fillOp = 0.1;
+
+                    if (owned) {
+                        // My Land: Growth Green (#00C805) regardless of rarity (simulating "My Assets" view)
+                        // Or color by rarity? Spec says "My Land: Highlighted in Growth Green"
+                        color = '#00C805'; 
+                        className = 'grid-owned';
+                        fillOp = 0.5;
+                    }
+
+                    const bounds = [[cLat, cLng], [cLat + PARCEL_SIZE, cLng + PARCEL_SIZE]];
+                    const rect = L.rectangle(bounds, {
+                        color: owned ? 'white' : '#cbd5e1',
+                        weight: owned ? 2 : 1,
+                        fillColor: color,
+                        fillOpacity: fillOp,
+                        className: className
+                    });
+
+                    // Interaction
+                    rect.on('click', () => {
+                        state.selectedParcelId = id;
+                        state.selectedCoords = [cLat, cLng];
+                        if (owned) {
+                            openUpgradeModal(owned);
+                        } else {
+                            openBuyModal();
+                        }
+                    });
+
+                    gridGroup.addLayer(rect);
+
+                    // If owned, draw the 3D Asset
+                    if (owned) {
+                        const rarityData = RARITY[owned.rarity.toUpperCase()];
+                        const assetIcon = L.divIcon({
+                            className: 'map-asset-icon',
+                            html: `<i class="fas ${rarityData.icon}" style="color:${rarityData.color}; font-size: 20px;"></i>`,
+                            iconSize: [20, 20],
+                            iconAnchor: [10, 10] // Center
+                        });
+                        L.marker([cLat + (PARCEL_SIZE/2), cLng + (PARCEL_SIZE/2)], {icon: assetIcon}).addTo(assetsGroup);
+                    }
+                }
+            }
+        }
+        drawGrid();
+
+        // --- SUPPLY DROPS ---
+        function spawnDrops() {
+            const offsets = [[0.0003, 0.0002], [-0.0002, -0.0003]];
+            offsets.forEach(off => {
+                const dLat = state.userLocation[0] + off[0];
+                const dLng = state.userLocation[1] + off[1];
+                
+                const dropMarker = L.marker([dLat, dLng], {
+                    icon: L.divIcon({
+                        className: 'supply-drop-marker',
+                        html: '💼',
+                        iconSize: [30, 30]
+                    })
+                }).addTo(map);
+
+                dropMarker.on('click', () => {
+                    document.getElementById('modal-drop').style.display = 'flex';
+                    map.removeLayer(dropMarker);
+                    // Haptic buzz (simulated)
+                    if (navigator.vibrate) navigator.vibrate(50);
+                });
+            });
+        }
+        setTimeout(spawnDrops, 1000);
+
+        // --- MINTING LOGIC (The Core Loop) ---
+        function openBuyModal() {
+            document.getElementById('modal-buy').style.display = 'flex';
+        }
+
+        function startMintingProcess() {
+            // Close buy modal, open Minting modal
+            document.getElementById('modal-buy').style.display = 'none';
+            document.getElementById('modal-minting').style.display = 'flex';
+
+            const statusText = document.getElementById('minting-status');
+            
+            // Sequence
+            setTimeout(() => { statusText.innerText = "Verifying Coordinates..."; }, 1000);
+            setTimeout(() => { statusText.innerText = "Securing Deed on Chain..."; }, 2500);
+            setTimeout(() => { 
+                revealRarity(); 
+            }, 3500);
+        }
+
+        function revealRarity() {
+            document.getElementById('modal-minting').style.display = 'none';
+            document.getElementById('modal-reveal').style.display = 'flex';
+
+            // RNG Logic
+            const rand = Math.random();
+            let tier = RARITY.COMMON;
+            if (rand > 0.95) tier = RARITY.LEGENDARY;
+            else if (rand > 0.80) tier = RARITY.EPIC;
+            else if (rand > 0.50) tier = RARITY.RARE;
+
+            // Update UI
+            const badge = document.getElementById('reveal-badge');
+            badge.className = `rarity-tag tag-${tier.id}`;
+            badge.innerText = tier.name;
+            
+            document.getElementById('reveal-title').innerText = `${tier.name} Parcel`;
+            document.getElementById('reveal-desc').innerText = `Rent Multiplier: ${tier.mult}x`;
+            document.getElementById('reveal-icon').innerText = tier.emoji;
+
+            // Global Ticker if Legendary
+            if (tier.id === 'legendary') {
+                showTicker("User You just found a MONUMENT!");
+            }
+
+            // Save Data
+            state.parcels.push({
+                id: state.selectedParcelId,
+                rarity: tier.id,
+                asset: 'default'
+            });
+
+            // Update Rent Calculation
+            state.rentPerSec += (0.0000001 * tier.mult);
+            
+            // Redraw
+            drawGrid();
+        }
+
+        // --- UPGRADE LOGIC ---
+        function openUpgradeModal(parcel) {
+            document.getElementById('modal-upgrade').style.display = 'flex';
+        }
+        function selectUpgrade(tierId) {
+            // In a real app, this would select specific 3D assets
+            confirmUpgrade();
+        }
+        function confirmUpgrade() {
+            // Visual feedback + deduct cash
+            closeModals();
+            // Just simulate a refresh for prototype
+            drawGrid();
+        }
+
+        // --- DROPS LOGIC ---
+        function openSupplyCase() {
+            // Simple logic
+            closeModals();
+            showTicker("Found 15 INK Cash + 1 Zoning Permit");
+            state.balance += 15;
+        }
+
+        // --- UI UTILS ---
+        function closeModals() {
+            document.querySelectorAll('.modal-overlay').forEach(el => el.style.display = 'none');
+        }
+
+        function showTicker(msg) {
+            const t = document.getElementById('global-ticker');
+            document.getElementById('ticker-text').innerText = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 4000);
+        }
+
+        // --- ECONOMY LOOP (Odometer) ---
+        function gameLoop() {
+            state.balance += state.rentPerSec;
+            document.getElementById('balance-display').innerText = '$' + state.balance.toFixed(7);
+            requestAnimationFrame(gameLoop);
+        }
+        requestAnimationFrame(gameLoop);
+
+        // FAB Action
+        function scanArea() {
+            // Simulate scanning animation
+            map.flyTo(state.userLocation, 20, {duration: 1.5});
+        }
+
+    </script>
+</body>
+</html>

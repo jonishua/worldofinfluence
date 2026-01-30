@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>World of Influence - Full Loop</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- CORE VARIABLES --- */
+        :root {
+            --growth-green: #00C805;
+            --neon-voltage: #39FF14;
+            --fintech-slate: #1e293b;
+            --brand-blue: #3B82F6;
+            --waze-bg: #f3f4f6;
+            --rarity-common: #10b981;
+            --rarity-rare: #3B82F6;
+            --rarity-epic: #8b5cf6;
+            --rarity-legendary: #f59e0b;
+        }
+
+        /* --- RESET & BASE --- */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        body { margin: 0; padding: 0; height: 100vh; overflow: hidden; font-family: 'Nunito', sans-serif; background: var(--waze-bg); }
+
+        /* --- MAP LAYER --- */
+        #map { height: 100%; width: 100%; z-index: 1; }
+        
+        /* --- HUD: TOP BAR --- */
+        .hud-top {
+            position: absolute; top: 0; left: 0; right: 0;
+            padding: 16px 20px; z-index: 1000;
+            display: flex; justify-content: space-between; align-items: flex-start;
+            pointer-events: none;
+        }
+
+        .avatar-circle {
+            width: 48px; height: 48px; background: white;
+            border: 2px solid var(--fintech-slate); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); font-size: 20px; color: var(--fintech-slate);
+            pointer-events: auto;
+        }
+
+        .balance-container {
+            pointer-events: auto; background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px); padding: 10px 20px; border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08); text-align: center;
+            border: 1px solid rgba(0,0,0,0.05); margin-top: 5px;
+        }
+        .balance-label { font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+        .balance-amount {
+            font-family: 'Roboto Mono', monospace; font-size: 24px; font-weight: 700;
+            color: var(--growth-green); letter-spacing: -1px; transition: color 0.3s;
+        }
+
+        /* Boost Button */
+        .boost-wrapper { pointer-events: auto; display: flex; flex-direction: column; align-items: center; }
+        .boost-btn {
+            width: 50px; height: 50px; background: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); font-size: 20px; color: #fbbf24;
+            border: 3px solid #f3f4f6; transition: 0.3s; cursor: pointer;
+        }
+        .boost-active .boost-btn {
+            background: var(--fintech-slate); color: var(--neon-voltage);
+            border-color: var(--neon-voltage); box-shadow: 0 0 20px var(--neon-voltage);
+            animation: pulse-btn 1s infinite;
+        }
+        .boost-timer {
+            font-size: 10px; font-weight: 800; background: var(--fintech-slate); color: white;
+            padding: 2px 6px; border-radius: 8px; margin-top: -10px; z-index: 2; opacity: 0;
+        }
+        .boost-active .boost-timer { opacity: 1; margin-top: 4px; }
+
+        @keyframes pulse-btn {
+            0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); }
+        }
+
+        /* --- GLOBAL TICKER --- */
+        .news-ticker {
+            position: absolute; top: 90px; left: 50%; transform: translateX(-50%);
+            background: rgba(30, 41, 59, 0.95); color: #fbbf24; padding: 8px 20px;
+            border-radius: 30px; font-size: 12px; font-weight: 700; white-space: nowrap;
+            z-index: 900; opacity: 0; pointer-events: none; transition: 0.5s;
+            display: flex; gap: 8px; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .news-ticker.show { opacity: 1; top: 80px; }
+
+        /* --- GRID STYLES --- */
+        .grid-unowned { fill: transparent; stroke: #cbd5e1; stroke-width: 1; stroke-opacity: 0.5; }
+        .grid-owned { stroke: white; stroke-width: 2; stroke-opacity: 0.8; fill-opacity: 0.6; }
+        
+        .map-asset-marker {
+            display: flex !important; justify-content: center; align-items: center;
+            font-size: 24px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+
+        /* High Voltage Mode */
+        .boost-mode .grid-owned {
+            stroke: var(--neon-voltage); stroke-width: 3;
+            filter: drop-shadow(0 0 8px var(--neon-voltage));
+            animation: voltage-pulse 2s infinite ease-in-out;
+        }
+        @keyframes voltage-pulse {
+            0% { fill-opacity: 0.5; } 50% { fill-opacity: 0.8; } 100% { fill-opacity: 0.5; }
+        }
+
+        /* --- MODALS --- */
+        .modal-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 2000; display: none;
+            justify-content: center; align-items: flex-end; backdrop-filter: blur(4px);
+        }
+        .modal-sheet {
+            background: white; width: 100%; max-width: 500px;
+            border-radius: 24px 24px 0 0; padding: 30px 24px 50px;
+            text-align: center; animation: slideUp 0.3s;
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        /* Minting Loader */
+        .minting-loader {
+            width: 50px; height: 50px; border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--growth-green); border-radius: 50%;
+            margin: 0 auto 20px; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .btn-primary {
+            background: var(--fintech-slate); color: white; width: 100%;
+            padding: 16px; border-radius: 16px; border: none; font-weight: 700; font-size: 16px;
+            margin-top: 15px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        /* Rarity Tags */
+        .rarity-tag {
+            display: inline-block; padding: 6px 16px; border-radius: 20px;
+            font-size: 12px; font-weight: 800; text-transform: uppercase;
+            margin-bottom: 15px; letter-spacing: 1px;
+        }
+        .tag-common { background: #d1fae5; color: var(--rarity-common); }
+        .tag-rare { background: #dbeafe; color: var(--rarity-rare); }
+        .tag-epic { background: #ede9fe; color: var(--rarity-epic); }
+        .tag-legendary { background: #fef3c7; color: var(--rarity-legendary); }
+
+        /* --- BOTTOM NAV --- */
+        .bottom-dock {
+            position: absolute; bottom: 30px; left: 20px; right: 20px;
+            height: 70px; background: white; border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1); z-index: 1000;
+            display: flex; justify-content: space-around; align-items: center;
+        }
+        .nav-item { color: #94a3b8; font-size: 10px; display:flex; flex-direction:column; align-items:center; }
+        .nav-item.active { color: var(--brand-blue); }
+        .nav-item i { font-size: 20px; margin-bottom: 4px; }
+        .fab-main {
+            width: 64px; height: 64px; background: var(--fintech-slate);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 24px; border: 4px solid white;
+            box-shadow: 0 10px 25px rgba(30, 41, 59, 0.4); margin-top: -30px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <div class="news-ticker" id="global-ticker">
+        <i class="fas fa-bullhorn"></i>
+        <span id="ticker-text">User AustinKing found a Monument!</span>
+    </div>
+
+    <div class="hud-top">
+        <div class="avatar-circle"><i class="fas fa-user-astronaut"></i></div>
+        
+        <div class="balance-container">
+            <div class="balance-label">Total Yield</div>
+            <div class="balance-amount" id="balance-display">$0.0000000</div>
+        </div>
+
+        <div class="boost-wrapper" id="boost-ui">
+            <div class="boost-btn" onclick="openBoostModal()"><i class="fas fa-bolt"></i></div>
+            <div class="boost-timer" id="boost-timer-display">00:00:00</div>
+        </div>
+    </div>
+
+    <div class="bottom-dock">
+        <div class="nav-item"><i class="fas fa-store"></i>Market</div>
+        <div class="nav-item"><i class="fas fa-chart-line"></i>Stats</div>
+        <div class="fab-main" onclick="scanArea()"><i class="fas fa-crosshairs"></i></div>
+        <div class="nav-item active"><i class="fas fa-map"></i>Map</div>
+        <div class="nav-item"><i class="fas fa-cog"></i>Settings</div>
+    </div>
+
+    <div class="modal-overlay" id="modal-buy">
+        <div class="modal-sheet">
+            <div style="font-size: 40px;">📍</div>
+            <div style="font-size: 22px; font-weight: 800;">Acquire Parcel</div>
+            <p style="color: #64748b; font-size: 14px;">Price: <strong>100 INK Cash</strong></p>
+            <button class="btn-primary" onclick="startMintingProcess()">Confirm Purchase</button>
+            <button class="btn-primary" style="background:#f1f5f9; color:#1e293b; margin-top:10px;" onclick="closeModals()">Cancel</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-minting">
+        <div class="modal-sheet">
+            <div class="minting-loader"></div>
+            <div style="font-size: 20px; font-weight: 800; color: var(--fintech-slate);" id="minting-status">Verifying Ledger...</div>
+            <p style="color: #64748b; font-size: 14px; margin-top: 5px;">Securing your digital asset on chain.</p>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-reveal">
+        <div class="modal-sheet">
+            <div id="reveal-badge" class="rarity-tag tag-common">Common</div>
+            <div style="font-size: 22px; font-weight: 800;" id="reveal-title">Standard Plot</div>
+            <div style="font-size: 60px; margin: 15px 0;" id="reveal-icon">🌱</div>
+            <p style="color: #64748b; font-size: 14px;" id="reveal-desc">Rent: $0.0000001 / sec</p>
+            <button class="btn-primary" onclick="finishPurchase()">Add to Portfolio</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-boost">
+        <div class="modal-sheet">
+            <div style="font-size: 50px; color: var(--neon-voltage); margin-bottom: 10px;">⚡</div>
+            <div style="font-size: 22px; font-weight: 800;">High Voltage Mode</div>
+            <p style="color: #64748b; font-size: 14px;">Watch a short video to get 30x Rent.</p>
+            <button class="btn-primary" style="background:var(--neon-voltage); color:black;" onclick="activateBoost()">Watch Ad (30s)</button>
+            <button class="btn-primary" style="background:#f1f5f9; color:#1e293b;" onclick="closeModals()">Cancel</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // --- CONSTANTS ---
+        const PARCEL_SIZE = 0.0001; // ~10m
+        const RARITY = {
+            COMMON: { id: 'common', name: 'Standard', mult: 1, color: '#10b981', emoji: '🌱', desc: 'Landscaping' },
+            RARE: { id: 'rare', name: 'Commercial', mult: 1.5, color: '#3B82F6', emoji: '☀️', desc: 'Solar Array' },
+            EPIC: { id: 'epic', name: 'Residential', mult: 2, color: '#8b5cf6', emoji: '🏡', desc: 'Modern Home' },
+            LEGENDARY: { id: 'legendary', name: 'Monument', mult: 4, color: '#f59e0b', emoji: '🗽', desc: 'Golden Statue' }
+        };
+
+        // --- GAME STATE ---
+        const state = {
+            balance: 104.5000000,
+            baseRent: 0.0000001,
+            totalRent: 0,
+            multiplier: 1,
+            isBoosted: false,
+            boostTime: 0,
+            parcels: [], // { id, rarity }
+            userLocation: [30.2672, -97.7431] // Austin
+        };
+
+        // --- MAP INIT ---
+        const map = L.map('map', { zoomControl: false, attributionControl: false }).setView(state.userLocation, 19);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 21 }).addTo(map);
+
+        const userIcon = L.divIcon({
+            className: 'user-marker',
+            html: `<div style="width:24px;height:24px;background:var(--brand-blue);border:3px solid white;border-radius:50%;box-shadow:0 4px 15px rgba(59,130,246,0.5);"></div>`,
+            iconSize: [24, 24]
+        });
+        L.marker(state.userLocation, {icon: userIcon, zIndexOffset: 2000}).addTo(map);
+
+        // --- INFINITE GRID & ASSET RENDERER ---
+        const gridLayer = L.layerGroup().addTo(map);
+        const assetLayer = L.layerGroup().addTo(map);
+        let drawnGrids = new Set(); 
+
+        function updateGrid() {
+            const bounds = map.getBounds();
+            // Snap bounds
+            const startX = Math.floor(bounds.getWest() / PARCEL_SIZE);
+            const endX = Math.ceil(bounds.getEast() / PARCEL_SIZE);
+            const startY = Math.floor(bounds.getSouth() / PARCEL_SIZE);
+            const endY = Math.ceil(bounds.getNorth() / PARCEL_SIZE);
+
+            for (let x = startX; x < endX; x++) {
+                for (let y = startY; y < endY; y++) {
+                    const id = `${x}_${y}`;
+                    
+                    if (!drawnGrids.has(id)) {
+                        const lat = y * PARCEL_SIZE;
+                        const lng = x * PARCEL_SIZE;
+                        const parcel = state.parcels.find(p => p.id === id);
+                        
+                        const isOwned = !!parcel;
+                        const color = isOwned ? RARITY[parcel.rarity.toUpperCase()].color : 'transparent';
+                        const className = isOwned ? 'grid-owned' : 'grid-unowned';
+                        const fillOp = isOwned ? 0.4 : 0; // Softer fill
+
+                        // Draw Rect
+                        const rect = L.rectangle([[lat, lng], [lat + PARCEL_SIZE, lng + PARCEL_SIZE]], {
+                            color: isOwned ? 'white' : '#cbd5e1',
+                            weight: 1,
+                            fillColor: color,
+                            fillOpacity: fillOp,
+                            className: className
+                        });
+
+                        rect.parcelId = id;
+                        rect.on('click', () => handleGridClick(id));
+                        gridLayer.addLayer(rect);
+                        drawnGrids.add(id);
+
+                        // If owned, draw ASSET ICON
+                        if (isOwned) {
+                            addAssetMarker(lat, lng, parcel.rarity);
+                        }
+                    }
+                }
+            }
+        }
+        
+        function addAssetMarker(lat, lng, rarity) {
+            const data = RARITY[rarity.toUpperCase()];
+            const centerLat = lat + (PARCEL_SIZE / 2);
+            const centerLng = lng + (PARCEL_SIZE / 2);
+            
+            const icon = L.divIcon({
+                className: 'map-asset-marker',
+                html: `<div style="text-shadow: 0 2px 4px rgba(0,0,0,0.2);">${data.emoji}</div>`,
+                iconSize: [30, 30]
+            });
+            
+            const marker = L.marker([centerLat, centerLng], {icon: icon, zIndexOffset: 1000});
+            assetLayer.addLayer(marker);
+        }
+
+        // Listener
+        map.on('moveend', updateGrid);
+        updateGrid();
+
+        // --- INTERACTION & BUY FLOW ---
+        let pendingId = null;
+
+        function handleGridClick(id) {
+            const isOwned = state.parcels.find(p => p.id === id);
+            if (!isOwned) {
+                pendingId = id;
+                document.getElementById('modal-buy').style.display = 'flex';
+            }
+        }
+
+        function startMintingProcess() {
+            closeModals();
+            document.getElementById('modal-minting').style.display = 'flex';
+            
+            const status = document.getElementById('minting-status');
+            setTimeout(() => { status.innerText = "Verifying Coordinates..."; }, 800);
+            setTimeout(() => { status.innerText = "Securing Deed..."; }, 1600);
+            setTimeout(() => { status.innerText = "Plot Registered."; }, 2400);
+            setTimeout(() => { revealRarity(); }, 3000);
+        }
+
+        function revealRarity() {
+            document.getElementById('modal-minting').style.display = 'none';
+            document.getElementById('modal-reveal').style.display = 'flex';
+
+            // RNG Logic
+            const rand = Math.random();
+            let tier = RARITY.COMMON;
+            if (rand > 0.95) tier = RARITY.LEGENDARY;
+            else if (rand > 0.80) tier = RARITY.EPIC;
+            else if (rand > 0.50) tier = RARITY.RARE;
+
+            // Commit to State
+            state.parcels.push({ id: pendingId, rarity: tier.id });
+            state.totalRent += (state.baseRent * tier.mult);
+
+            // Update UI
+            const badge = document.getElementById('reveal-badge');
+            badge.className = `rarity-tag tag-${tier.id}`;
+            badge.innerText = tier.name;
+            document.getElementById('reveal-title').innerText = tier.name;
+            document.getElementById('reveal-desc').innerText = `${tier.desc} (Yield: ${tier.mult}x)`;
+            document.getElementById('reveal-icon').innerText = tier.emoji;
+
+            // Trigger Grid Redraw (Clears cached unowned grid, draws new owned one)
+            // Note: In a real app we'd update specifically, but clearing cache works for prototype
+            drawnGrids.delete(pendingId);
+            gridLayer.eachLayer(layer => {
+                if (layer.parcelId === pendingId) map.removeLayer(layer);
+            });
+            updateGrid();
+
+            // Jackpot?
+            if (tier.id === 'legendary') {
+                showTicker("User AustinKing found a MONUMENT!");
+            }
+        }
+
+        function finishPurchase() {
+            closeModals();
+            // Trigger confetti or sound here
+        }
+
+        function showTicker(msg) {
+            const t = document.getElementById('global-ticker');
+            document.getElementById('ticker-text').innerText = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 4000);
+        }
+
+        // --- BOOST & ECONOMY ---
+        function openBoostModal() { document.getElementById('modal-boost').style.display = 'flex'; }
+        
+        function activateBoost() {
+            closeModals();
+            state.isBoosted = true;
+            state.multiplier = 30;
+            state.boostTime += 3600;
+            document.getElementById('boost-ui').classList.add('boost-active');
+            document.body.classList.add('boost-mode');
+        }
+
+        function gameLoop() {
+            // Timer
+            if (state.boostTime > 0) {
+                state.boostTime--;
+                const h = Math.floor(state.boostTime / 3600);
+                const m = Math.floor((state.boostTime % 3600) / 60);
+                const s = state.boostTime % 60;
+                document.getElementById('boost-timer-display').innerText = `${h}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            } else if (state.isBoosted) {
+                state.isBoosted = false;
+                state.multiplier = 1;
+                document.getElementById('boost-ui').classList.remove('boost-active');
+                document.body.classList.remove('boost-mode');
+            }
+
+            // Money
+            const currentYield = state.totalRent > 0 ? state.totalRent : 0;
+            state.balance += (currentYield * state.multiplier);
+            
+            const el = document.getElementById('balance-display');
+            el.innerText = '$' + state.balance.toFixed(7);
+            
+            if (state.isBoosted) {
+                el.style.color = Math.random() > 0.8 ? '#39FF14' : '#00C805';
+            } else {
+                el.style.color = '#00C805';
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+        requestAnimationFrame(gameLoop);
+
+        function closeModals() {
+            document.querySelectorAll('.modal-overlay').forEach(el => el.style.display = 'none');
+        }
+        function scanArea() { map.flyTo(state.userLocation, 19, {duration: 1.5}); }
+
+    </script>
+</body>
+</html>
