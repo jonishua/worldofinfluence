@@ -32,7 +32,9 @@ export default function Reel({
   const extendedStrip = useMemo(() => Array(10).fill(REEL_STRIP).flat(), []);
 
   const onStopRef = useRef(onStop);
-  onStopRef.current = onStop;
+  useEffect(() => {
+    onStopRef.current = onStop;
+  }, [onStop]);
 
   useEffect(() => {
     if (!isSpinning) {

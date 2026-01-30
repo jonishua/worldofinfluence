@@ -51,7 +51,7 @@ export default function PendingPill({ onClick, className = "", minimal = false }
   const escrowLimit = useGameStore((state) => state.escrowLimit);
   const boostEndTime = useGameStore((state) => state.boostEndTime);
   const isBoostActiveSelector = useGameStore((state) => state.isBoostActive);
-  const balanceRef = useRef<HTMLSpanElement | null>(null);
+  const balanceRef = useRef<HTMLParagraphElement | null>(null);
   const timerRef = useRef<HTMLSpanElement | null>(null);
   const barRef = useRef<HTMLDivElement | null>(null);
   const rafId = useRef(0);
@@ -62,8 +62,8 @@ export default function PendingPill({ onClick, className = "", minimal = false }
   const previousElapsed = useRef(0);
   const previousPending = useRef(0);
   const previousSettled = useRef(lastSettledTime);
-  const [colorClass, setColorClass] = useState(currentColor.current);
-  const [barClass, setBarClass] = useState(currentBarColor.current);
+  const [colorClass, setColorClass] = useState("text-[#00C805]");
+  const [barClass, setBarClass] = useState("bg-[#00C805]");
   const [isBoostActive, setIsBoostActive] = useState(false);
 
   useEffect(() => {

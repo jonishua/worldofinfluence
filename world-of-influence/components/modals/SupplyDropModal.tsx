@@ -51,9 +51,12 @@ export default function SupplyDropModal({ dropId, onClose }: SupplyDropModalProp
     if (!dropId) {
       return;
     }
-    setProgress(0);
-    setIsHolding(false);
-    setReward(null);
+    const timeout = window.setTimeout(() => {
+      setProgress(0);
+      setIsHolding(false);
+      setReward(null);
+    }, 0);
+    return () => window.clearTimeout(timeout);
   }, [dropId]);
 
   useEffect(() => {
@@ -77,7 +80,7 @@ export default function SupplyDropModal({ dropId, onClose }: SupplyDropModalProp
       window.clearInterval(intervalRef.current);
       intervalRef.current = null;
       if (!reward) {
-        setProgress(0);
+        window.setTimeout(() => setProgress(0), 0);
       }
     }
 
@@ -93,11 +96,14 @@ export default function SupplyDropModal({ dropId, onClose }: SupplyDropModalProp
     if (progress < 100 || reward || !dropId) {
       return;
     }
-    setIsHolding(false);
     if (navigator.vibrate) {
       navigator.vibrate([50, 50, 200]);
     }
-    setReward(collectDrop(dropId));
+    const timeout = window.setTimeout(() => {
+      setIsHolding(false);
+      setReward(collectDrop(dropId));
+    }, 0);
+    return () => window.clearTimeout(timeout);
   }, [collectDrop, dropId, progress, reward]);
 
   if (!drop || (drop.collected && !reward)) {

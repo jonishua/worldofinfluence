@@ -253,7 +253,7 @@ const ServiceCard = ({
   isSubscribed 
 }: { 
   tier: SubscriptionTier, 
-  containerRef: React.RefObject<HTMLDivElement>,
+  containerRef: React.RefObject<HTMLDivElement | null>,
   onAcquire: (product: ShopProduct) => void,
   isSubscribed: boolean
 }) => {
@@ -619,6 +619,8 @@ export default function ShopModal({ isOpen, onClose }: { isOpen: boolean; onClos
     onClose();
   };
 
+  const [institutionalRef] = useState(() => Math.random().toString(36).substring(7).toUpperCase());
+
   return (
     <AnimatePresence>
       {(isOpen || shopState !== "idle") && (
@@ -983,7 +985,7 @@ export default function ShopModal({ isOpen, onClose }: { isOpen: boolean; onClos
                       </div>
 
                       <p className="text-[8px] font-bold uppercase tracking-[0.4em] text-slate-300">
-                        Institutional Ref: {Math.random().toString(36).substring(7).toUpperCase()}
+                        Institutional Ref: {institutionalRef}
                       </p>
                     </div>
                     

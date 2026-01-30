@@ -55,39 +55,6 @@ export default function TerminalModal({ isOpen, onClose }: TerminalModalProps) {
 
   const multipliers = [1, 5, 10];
 
-  // Auto-spin trigger when toggled ON
-  useEffect(() => {
-    // Only trigger a new spin if auto-spin was just turned on and we are idle
-    if (autoSpin && !isSpinning && isOpen && credits >= betMultiplier && !autoSpinTimeoutRef.current) {
-      handleSpin();
-    }
-  }, [autoSpin, isOpen]); // Only watch autoSpin and modal open state
-
-  // Reset state when modal opens/closes
-  useEffect(() => {
-    if (!isOpen) {
-      setIsSpinning(false);
-      isSpinningRef.current = false;
-      // We no longer clear spinResult here so it persists
-      setReelsStopped([false, false, false]);
-      setWinTier(null);
-      setShowWinDisplay(false);
-      setAutoSpin(false);
-      autoSpinRef.current = false;
-      setBetMultiplier(1);
-      betMultiplierRef.current = 1;
-      setIsShaking(false);
-      
-      if (autoSpinTimeoutRef.current) clearTimeout(autoSpinTimeoutRef.current);
-      if (resultTimeoutRef.current) clearTimeout(resultTimeoutRef.current);
-      if (autoSpinDelayTimeoutRef.current) clearTimeout(autoSpinDelayTimeoutRef.current);
-      
-      autoSpinTimeoutRef.current = null;
-      resultTimeoutRef.current = null;
-      autoSpinDelayTimeoutRef.current = null;
-    }
-  }, [isOpen]);
-
   // Trigger haptic feedback
   const triggerHaptic = useCallback((pattern: number[]) => {
     if ("vibrate" in navigator) {
@@ -95,7 +62,6 @@ export default function TerminalModal({ isOpen, onClose }: TerminalModalProps) {
     }
   }, []);
 
-  // Celebrate win based on tier
   const celebrateWin = useCallback(
     (tier: WinTier) => {
       if (tier === "miss") {
@@ -157,6 +123,40 @@ export default function TerminalModal({ isOpen, onClose }: TerminalModalProps) {
     setIsSpinning(true);
     isSpinningRef.current = true;
   }, [addCredits]);
+
+  // Auto-spin trigger when toggled ON
+  useEffect(() => {
+    // Only trigger a new spin if auto-spin was just turned on and we are idle
+    if (autoSpin && !isSpinning && isOpen && credits >= betMultiplier && !autoSpinTimeoutRef.current) {
+      handleSpin();
+    }
+  }, [autoSpin, isOpen, credits, betMultiplier, isSpinning, handleSpin]); // Added missing dependencies
+
+  // Reset state when modal opens/closes
+  useEffect(() => {
+    if (!isOpen) {
+      setIsSpinning(false);
+      isSpinningRef.current = false;
+      // We no longer clear spinResult here so it persists
+      setReelsStopped([false, false, false]);
+      setWinTier(null);
+      setShowWinDisplay(false);
+      setAutoSpin(false);
+      autoSpinRef.current = false;
+      setBetMultiplier(1);
+      betMultiplierRef.current = 1;
+      setIsShaking(false);
+      
+      if (autoSpinTimeoutRef.current) clearTimeout(autoSpinTimeoutRef.current);
+      if (resultTimeoutRef.current) clearTimeout(resultTimeoutRef.current);
+      if (autoSpinDelayTimeoutRef.current) clearTimeout(autoSpinDelayTimeoutRef.current);
+      
+      autoSpinTimeoutRef.current = null;
+      resultTimeoutRef.current = null;
+      autoSpinDelayTimeoutRef.current = null;
+    }
+  }, [isOpen]);
+
 
   // Handle reel stop callbacks
   const handleReelStop = useCallback(

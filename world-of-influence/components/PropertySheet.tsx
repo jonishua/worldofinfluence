@@ -30,7 +30,11 @@ export default function PropertySheet() {
   const extendBoost = useGameStore((state) => state.extendBoost);
   const upgradeParcel = useGameStore((state) => state.upgradeParcel);
   const setSelectedParcel = useGameStore((state) => state.setSelectedParcel);
-  const [nowTime, setNowTime] = useState(Date.now());
+  const [nowTime, setNowTime] = useState(0);
+  
+  useEffect(() => {
+    setNowTime(Date.now());
+  }, []);
   const [renovationStatus, setRenovationStatus] = useState<
     "idle" | "demolish" | "build" | "reveal"
   >("idle");
@@ -63,7 +67,7 @@ export default function PropertySheet() {
   }, [nowTime, parcel]);
 
   const isBoostActive = useMemo(
-    () => isBoostActiveSelector(nowTime || Date.now()),
+    () => isBoostActiveSelector(nowTime || 0),
     [isBoostActiveSelector, nowTime],
   );
   const boostMultiplier = useMemo(

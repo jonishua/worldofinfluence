@@ -74,13 +74,16 @@ export default function PurchaseModal() {
     if (!selectedParcel) {
       return;
     }
-    setPhase("buy");
-    setStepIndex(0);
-    setError(null);
-    setMintedId(null);
-    setIsMinting(false);
-    timeouts.current.forEach((timeout) => window.clearTimeout(timeout));
-    timeouts.current = [];
+    const timeout = window.setTimeout(() => {
+      setPhase("buy");
+      setStepIndex(0);
+      setError(null);
+      setMintedId(null);
+      setIsMinting(false);
+      timeouts.current.forEach((t) => window.clearTimeout(t));
+      timeouts.current = [];
+    }, 0);
+    return () => window.clearTimeout(timeout);
   }, [selectedParcel, setIsMinting]);
 
   useEffect(() => {

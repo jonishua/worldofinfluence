@@ -29,7 +29,6 @@ const rarityIcon = (rarity: ParcelRarity) => {
 };
 
 export default function AssetMarker({ position, rarity, lastUpgradedAt }: AssetMarkerProps) {
-  const Icon = rarityIcon(rarity);
   const [isPopping, setIsPopping] = useState(false);
 
   useEffect(() => {
@@ -39,25 +38,28 @@ export default function AssetMarker({ position, rarity, lastUpgradedAt }: AssetM
     if (Date.now() - lastUpgradedAt > 2500) {
       return;
     }
-    setIsPopping(true);
-    const timeout = window.setTimeout(() => setIsPopping(false), 800);
-    return () => window.clearTimeout(timeout);
+    
+    const startTimeout = window.setTimeout(() => setIsPopping(true), 0);
+    const endTimeout = window.setTimeout(() => setIsPopping(false), 800);
+    return () => {
+      window.clearTimeout(startTimeout);
+      window.clearTimeout(endTimeout);
+    };
   }, [lastUpgradedAt]);
 
-  const icon = useMemo(
-    () =>
-      L.divIcon({
-        className: `map-asset-icon map-asset-icon--3d ${isPopping ? "map-asset-icon--pop" : ""}`,
-        html: renderToStaticMarkup(
-          <div style={{ color: rarityColor[rarity] }}>
-            <Icon className="h-5 w-5" />
-          </div>,
-        ),
-        iconSize: [28, 28],
-        iconAnchor: [14, 20],
-      }),
-    [Icon, isPopping, rarity],
-  );
+  const icon = useMemo(() => {
+    const Icon = rarityIcon(rarity);
+    return L.divIcon({
+      className: `map-asset-icon map-asset-icon--3d ${isPopping ? "map-asset-icon--pop" : ""}`,
+      html: renderToStaticMarkup(
+        <div style={{ color: rarityColor[rarity] }}>
+          <Icon className="h-5 w-5" />
+        </div>,
+      ),
+      iconSize: [28, 28],
+      iconAnchor: [14, 20],
+    });
+  }, [isPopping, rarity]);
 
   const zIndexOffset = Math.round((90 - position[0]) * 1000);
 

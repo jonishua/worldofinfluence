@@ -26,7 +26,11 @@ export default function BalanceTicker() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [remainingSeconds, setRemainingSeconds] = useState(0);
 
-  const isBoostActive = boostEndTime ? boostEndTime > Date.now() : false;
+  const isBoostActive = useMemo(() => {
+    if (!boostEndTime) return false;
+    return boostEndTime > Date.now();
+  }, [boostEndTime, remainingSeconds]);
+  
   const boostMultiplier = getBoostMultiplier(Object.keys(ownedParcels).length);
 
   useEffect(() => {
