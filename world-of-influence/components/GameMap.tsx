@@ -15,7 +15,7 @@ import {
   useMapEvents,
 } from "react-leaflet";
 
-import {
+import { 
   getGridBoundsForIndex,
   getGridBoundsWithReference,
   getGridIndices,
@@ -23,12 +23,14 @@ import {
 } from "@/lib/gridSystem";
 import { themeById, useThemeStore } from "@/lib/theme";
 import AssetMarker from "@/components/AssetMarker";
+import { supabase } from "@/lib/supabase";
 import { 
   Drop, 
   DropRarity, 
   LatLng, 
   useMapStore, 
-  usePropertyStore 
+  usePropertyStore,
+  GlobalDrop
 } from "@/store/useGameStore";
 import SupplyDropModal from "@/components/modals/SupplyDropModal";
 
@@ -184,21 +186,34 @@ const userIcon = L.divIcon({
   iconAnchor: [20, 20],
 });
 
-const buildDropIcon = (rarity: DropRarity, isInRange: boolean) =>
+const ghostIcon = L.divIcon({
+  className: "ghost-marker",
+  html: renderToStaticMarkup(
+    <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-slate-800/40 shadow-lg backdrop-blur-[1px]">
+      <UserRound className="h-4 w-4 text-white/60" />
+    </div>,
+  ),
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
+});
+
+const buildDropIcon = (rarity: DropRarity, isInRange: boolean, isGlobal: boolean = false) =>
   L.divIcon({
-    className: "supply-drop-marker",
+    className: `supply-drop-marker ${isGlobal ? "global-drop" : ""}`,
     html: renderToStaticMarkup(
       <div
         className={`supply-case supply-case--${rarity.toLowerCase()} ${
-          rarity === "Legendary" ? "supply-glow" : ""
-        } ${isInRange ? "supply-case--active" : "supply-case--locked"}`}
+          rarity === "Legendary" || isGlobal ? "supply-glow" : ""
+        } ${isInRange ? "supply-case--active" : "supply-case--locked"} ${
+          isGlobal ? "border-2 border-[#00C805] shadow-[0_0_15px_rgba(0,200,5,0.6)]" : ""
+        }`}
       >
         <span className="supply-case__backing" />
         <div className="supply-case__lid" />
         <div className="supply-case__band" />
         <div className="supply-case__handle" />
-        <Briefcase className="supply-case__icon" />
-        {rarity === "Legendary" && <span className="supply-case__badge" />}
+        <Briefcase className={`supply-case__icon ${isGlobal ? "text-[#00C805]" : ""}`} />
+        {(rarity === "Legendary" || isGlobal) && <span className="supply-case__badge" />}
       </div>,
     ),
     iconSize: [44, 36],
@@ -212,6 +227,8 @@ export default function GameMap() {
   );
   const userLocation = useMapStore((state) => state.userLocation);
   const drops = useMapStore((state) => state.drops);
+  const otherPlayers = useMapStore((state) => state.otherPlayers);
+  const globalDrops = useMapStore((state) => state.globalDrops);
   const setUserLocation = useMapStore((state) => state.setUserLocation);
   const generateDrops = useMapStore((state) => state.generateDrops);
   const isDropInRange = useMapStore((state) => state.isDropInRange);
@@ -316,6 +333,30 @@ export default function GameMap() {
   const handleSelectParcel = (lat: number, lng: number) => {
     const parcel = getGridBoundsWithReference(lat, lng, gridReferenceLat);
     setSelectedParcel(parcel);
+  };
+
+  const handleGlobalDropClick = async (drop: GlobalDrop) => {
+    if (!userLocation) return;
+    const inRange = isDropInRange(userLocation, drop, pickupRadius);
+    if (!inRange) {
+      showToast("Global target out of range. Move closer.");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.rpc("collect_global_drop", { drop_id: drop.id });
+      if (error) throw error;
+      const result = data as { success: boolean; rarity: string; reason?: string };
+      if (result.success) {
+        showToast(`Secured Global Asset: ${result.rarity}!`);
+        // The real-time subscription will remove it from the map
+      } else {
+        showToast(result.reason || "Failed to secure asset.");
+      }
+    } catch (err) {
+      console.error("Collection error:", err);
+      showToast("Error securing global asset.");
+    }
   };
 
   const gridSquares = useMemo(() => {
@@ -426,6 +467,28 @@ export default function GameMap() {
         />
 
         <Marker position={[smoothedLocation.lat, smoothedLocation.lng]} icon={userIcon} />
+
+        {Object.values(otherPlayers).map((player) => (
+          <Marker
+            key={`player-${player.id}`}
+            position={[player.location.lat, player.location.lng]}
+            icon={ghostIcon}
+          />
+        ))}
+
+        {globalDrops.map((drop) => {
+          const inRange = userLocation ? isDropInRange(userLocation, drop, pickupRadius) : false;
+          return (
+            <Marker
+              key={`global-${drop.id}`}
+              position={[drop.location.lat, drop.location.lng]}
+              icon={buildDropIcon(drop.rarity, inRange, true)}
+              eventHandlers={{
+                click: () => handleGlobalDropClick(drop),
+              }}
+            />
+          );
+        })}
 
         {Object.values(ownedParcels).map((parcel) => {
           if (parcel.rarity === "common") {

@@ -12,6 +12,7 @@ type PlayerProfileModalProps = {
 export default function PlayerProfileModal({ isOpen, onClose }: PlayerProfileModalProps) {
   const playerPosition = useGovernanceStore((state) => state.playerPositions.city);
   const cityKeysOwned = useGovernanceStore((state) => state.cityKeysOwned);
+  const setSelectedJurisdiction = useGovernanceStore((state) => state.setSelectedJurisdiction);
   const playerName = playerPosition?.entry.name ?? "Player";
   const playerTitle = playerPosition?.entry.title ?? "Investor";
   const playerRegion = playerPosition?.entry.region ?? "Unknown";
@@ -102,9 +103,17 @@ export default function PlayerProfileModal({ isOpen, onClose }: PlayerProfileMod
                   className="flex items-center justify-between rounded-[14px] border border-white/70 bg-white px-3 py-2"
                 >
                   <span className="font-semibold">{region}</span>
-                  <span className="font-mono font-semibold text-slate-900 tabular-nums">
-                    ×{count}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setSelectedJurisdiction(region)}
+                      className="text-[10px] font-bold uppercase tracking-widest text-[#00C805] hover:opacity-80 transition-opacity"
+                    >
+                      Manage
+                    </button>
+                    <span className="font-mono font-semibold text-slate-900 tabular-nums">
+                      ×{count}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>

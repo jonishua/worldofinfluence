@@ -3,10 +3,14 @@
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/useGameStore";
+import { usePresence } from "@/hooks/usePresence";
 
 export const SyncManager = () => {
   const hydrateFromCloud = useAuthStore((state) => state.hydrateFromCloud);
   const resetGame = useAuthStore((state) => state.resetGame);
+  
+  // Real-time Presence and Global Drops
+  usePresence();
 
   useEffect(() => {
     // Initial check

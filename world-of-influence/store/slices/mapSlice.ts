@@ -4,6 +4,8 @@ import {
   LatLng, 
   Drop, 
   RewardType, 
+  PlayerPresence,
+  GlobalDrop,
   DROP_SPAWN_INTERVAL_MS,
   ACTIVE_DROP_MIN,
   ACTIVE_DROP_MAX,
@@ -20,12 +22,16 @@ export interface MapSlice {
   locationRequestId: number;
   pickupRadiusMultiplier: number;
   drops: Drop[];
+  otherPlayers: Record<string, PlayerPresence>;
+  globalDrops: GlobalDrop[];
   lastDropSpawnTime: number;
   selectedParcel: GridBounds | null;
   mapZoom: number;
   minMapZoom: number;
   maxMapZoom: number;
   setUserLocation: (location: LatLng) => void;
+  setOtherPlayers: (players: Record<string, PlayerPresence>) => void;
+  setGlobalDrops: (drops: GlobalDrop[] | ((current: GlobalDrop[]) => GlobalDrop[])) => void;
   setMapZoom: (zoom: number) => void;
   setMapZoomLimits: (minZoom: number, maxZoom: number) => void;
   setPickupRadiusMultiplier: (multiplier: number) => void;
@@ -33,7 +39,7 @@ export interface MapSlice {
   generateDrops: (origin: LatLng) => void;
   spawnDropsInRadius: (origin: LatLng, count: number, radiusMeters: number) => void;
   collectDrop: (dropId: string) => { type: RewardType; amount: number };
-  isDropInRange: (origin: LatLng, drop: Drop, radiusMeters?: number) => boolean;
+  isDropInRange: (origin: LatLng, drop: { location: LatLng }, radiusMeters?: number) => boolean;
 }
 
 export const createMapSlice: StateCreator<GameState, [], [], MapSlice> = (set, get) => ({
@@ -41,6 +47,8 @@ export const createMapSlice: StateCreator<GameState, [], [], MapSlice> = (set, g
   locationRequestId: 0,
   pickupRadiusMultiplier: 1,
   drops: [],
+  otherPlayers: {},
+  globalDrops: [],
   lastDropSpawnTime: 0,
   selectedParcel: null,
   mapZoom: 17,
@@ -48,6 +56,14 @@ export const createMapSlice: StateCreator<GameState, [], [], MapSlice> = (set, g
   maxMapZoom: 21,
 
   setUserLocation: (location) => set({ userLocation: location }),
+  setOtherPlayers: (players) => set({ otherPlayers: players }),
+  setGlobalDrops: (drops) => {
+    if (typeof drops === "function") {
+      set((state) => ({ globalDrops: drops(state.globalDrops) }));
+    } else {
+      set({ globalDrops: drops });
+    }
+  },
   setMapZoom: (zoom) => set({ mapZoom: zoom }),
   setMapZoomLimits: (minZoom, maxZoom) => {
     const min = Math.max(0, Math.min(minZoom, maxZoom));

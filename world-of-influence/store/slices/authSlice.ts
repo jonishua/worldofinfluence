@@ -1,5 +1,6 @@
 import { StateCreator } from "zustand";
 import { supabase } from "@/lib/supabase";
+import { User as SupabaseUser } from "@supabase/supabase-js";
 import { 
   GameState, 
   MOCK_LEADERBOARDS, 
@@ -10,18 +11,23 @@ import {
 } from "../types";
 
 export interface AuthSlice {
+  user: SupabaseUser | null;
   isSyncing: boolean;
   lastSyncTime: number | null;
   cloudSyncError: string | null;
+  setUser: (user: SupabaseUser | null) => void;
   hydrateFromCloud: () => Promise<void>;
   syncToCloud: () => Promise<void>;
   resetGame: () => Promise<void>;
 }
 
 export const createAuthSlice: StateCreator<GameState, [], [], AuthSlice> = (set, get) => ({
+  user: null,
   isSyncing: false,
   lastSyncTime: null,
   cloudSyncError: null,
+
+  setUser: (user) => set({ user }),
 
   resetGame: async () => {
     const now = Date.now();

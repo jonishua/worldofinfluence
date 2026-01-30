@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User, LogOut, ShieldCheck, Cloud, CloudOff, RefreshCw } from "lucide-react";
+import { User, LogOut, ShieldCheck, Cloud, CloudOff, RefreshCw, Users } from "lucide-react";
 import BalanceTicker from "@/components/BalanceTicker";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { supabase } from "@/lib/supabase";
 import { User as SupabaseUser } from "@supabase/supabase-js";
-import { useAuthStore } from "@/store/useGameStore";
+import { useAuthStore, useMapStore } from "@/store/useGameStore";
 import { formatDistanceToNow } from "date-fns";
 
 export default function TopNav() {
@@ -15,6 +15,9 @@ export default function TopNav() {
   const isSyncing = useAuthStore((state) => state.isSyncing);
   const lastSyncTime = useAuthStore((state) => state.lastSyncTime);
   const cloudSyncError = useAuthStore((state) => state.cloudSyncError);
+  const otherPlayers = useMapStore((state) => state.otherPlayers);
+
+  const onlineCount = Object.keys(otherPlayers).length + (user ? 1 : 0);
 
   useEffect(() => {
     // Get initial session
@@ -68,6 +71,17 @@ export default function TopNav() {
               <span className="text-white text-xs font-bold uppercase tracking-wide">Initialize</span>
             </button>
           )}
+
+          {/* Online Operators Counter */}
+          <div className="mt-2 flex items-center gap-2 px-3 py-1.5 bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-full w-fit">
+            <div className="relative">
+              <Users className="w-3 h-3 text-[#00C805]" />
+              <span className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-[#00C805] rounded-full animate-pulse" />
+            </div>
+            <span className="text-[10px] font-mono text-white/70 uppercase tracking-widest whitespace-nowrap">
+              {onlineCount} <span className="opacity-40">Active</span>
+            </span>
+          </div>
         </div>
 
         {/* Center: Balance */}

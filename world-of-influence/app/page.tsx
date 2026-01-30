@@ -7,20 +7,30 @@ import PropertySheet from "@/components/PropertySheet";
 import PurchaseModal from "@/components/PurchaseModal";
 import TerminalModal from "@/components/modals/TerminalModal";
 import ShopModal from "@/components/modals/ShopModal";
+import PlayerProfileModal from "@/components/modals/PlayerProfileModal";
+import MayorDashboard from "@/components/modals/MayorDashboard";
 import ThemeProvider from "@/components/ThemeProvider";
 import LeaderboardPanel from "@/components/hud/LeaderboardPanel";
 import LeaderboardWidget from "@/components/hud/LeaderboardWidget";
 import SplitLedger from "@/components/hud/SplitLedger";
+import { useGovernanceStore } from "@/store/useGameStore";
+import { AnimatePresence } from "framer-motion";
 
 export default function Home() {
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
   const [isShopOpen, setIsShopOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const selectedJurisdiction = useGovernanceStore((state) => state.selectedJurisdiction);
+  const setSelectedJurisdiction = useGovernanceStore((state) => state.setSelectedJurisdiction);
 
   return (
     <ThemeProvider>
       <div className="relative h-screen w-screen overflow-hidden bg-[var(--bg-color)] text-[var(--text-primary)]">
         <GameMapClient />
-        <SplitLedger />
+        <SplitLedger 
+          onOpenProfile={() => setIsProfileOpen(true)}
+          isProfileOpen={isProfileOpen}
+        />
         <LeaderboardWidget />
         <BottomNav 
           onOpenTerminal={() => setIsTerminalOpen(true)} 
@@ -32,6 +42,18 @@ export default function Home() {
         <PropertySheet />
         <TerminalModal isOpen={isTerminalOpen} onClose={() => setIsTerminalOpen(false)} />
         <ShopModal isOpen={isShopOpen} onClose={() => setIsShopOpen(false)} />
+        
+        <PlayerProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
+        
+        <AnimatePresence>
+          {selectedJurisdiction && (
+            <MayorDashboard 
+              isOpen={true} 
+              onClose={() => setSelectedJurisdiction(null)} 
+              region={selectedJurisdiction} 
+            />
+          )}
+        </AnimatePresence>
       </div>
     </ThemeProvider>
   );

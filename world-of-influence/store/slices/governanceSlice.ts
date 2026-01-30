@@ -39,9 +39,11 @@ export interface GovernanceSlice {
   lastSponsorBriefingTime: number;
   activeSubscriptions: string[];
   isTickerVisible: boolean;
+  selectedJurisdiction: string | null;
   setLeaderboardOpen: (isOpen: boolean) => void;
   setActiveLeaderboardScope: (scope: LeaderboardTab) => void;
   setTickerVisible: (visible: boolean) => void;
+  setSelectedJurisdiction: (region: string | null) => void;
   watchSponsorBriefing: () => { success: boolean; remainingCooldown?: number };
   activateSubscription: (tierId: string) => void;
   purchaseCityKey: (regionId: string, costInk: number, level: CityKeyLevel) => boolean;
@@ -71,10 +73,12 @@ export const createGovernanceSlice: StateCreator<GameState, [], [], GovernanceSl
   lastSponsorBriefingTime: 0,
   activeSubscriptions: [],
   isTickerVisible: false,
+  selectedJurisdiction: null,
 
   setLeaderboardOpen: (isOpen) => set({ isLeaderboardOpen: isOpen }),
   setActiveLeaderboardScope: (scope) => set({ activeLeaderboardScope: scope }),
   setTickerVisible: (visible) => set({ isTickerVisible: visible }),
+  setSelectedJurisdiction: (region) => set({ selectedJurisdiction: region }),
 
   watchSponsorBriefing: () => {
     const now = Date.now();

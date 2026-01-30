@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Lock, Zap, Newspaper, Coins, Landmark, FileText, ChevronRight } from "lucide-react";
+import { Lock, Zap, Newspaper, Coins, Landmark, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import PendingPill from "@/components/hud/PendingPill";
 import IncomeDetailModal from "@/components/modals/IncomeDetailModal";
-import PlayerProfileModal from "@/components/modals/PlayerProfileModal";
 import { 
   useEconomyStore, 
   useGovernanceStore, 
@@ -18,15 +17,20 @@ const formatDuration = (totalSeconds: number) => {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 };
 
-export default function SplitLedger() {
+type SplitLedgerProps = {
+  onOpenProfile?: () => void;
+  isProfileOpen?: boolean;
+};
+
+export default function SplitLedger({ onOpenProfile }: SplitLedgerProps) {
   const [isIncomeOpen, setIsIncomeOpen] = useState(false);
   const [isWalletOpen, setIsWalletOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [walletPulseId, setWalletPulseId] = useState(0);
   const [isAdLoading, setIsAdLoading] = useState(false);
   const [adMessage, setAdMessage] = useState("Connecting to Sponsor...");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isBoostActive, setIsBoostActive] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isWalletPulsing, setIsWalletPulsing] = useState(false);
   const boostEndTime = useEconomyStore((state) => state.boostEndTime);
   const isBoostActiveSelector = useEconomyStore((state) => state.isBoostActive);
@@ -56,6 +60,7 @@ export default function SplitLedger() {
   const toastTimeout = useRef<number | null>(null);
   const boostShockTimeout = useRef<number | null>(null);
   const previousBoost = useRef(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [showBoostShock, setShowBoostShock] = useState(false);
 
   const [remainingSeconds, setRemainingSeconds] = useState(0);
@@ -74,6 +79,7 @@ export default function SplitLedger() {
     const interval = window.setInterval(updateBoost, 1000);
     return () => {
       window.clearInterval(interval);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       adTimeouts.current.forEach((timeout) => window.clearTimeout(timeout));
       if (toastTimeout.current) {
         window.clearTimeout(toastTimeout.current);
@@ -82,7 +88,7 @@ export default function SplitLedger() {
         window.clearTimeout(boostShockTimeout.current);
       }
     };
-  }, [isBoostActiveSelector]);
+  }, [isBoostActiveSelector, boostEndTime]);
 
   useEffect(() => {
     if (isBoostActive && !previousBoost.current) {
@@ -138,16 +144,14 @@ export default function SplitLedger() {
     <>
       <div className="pointer-events-none fixed left-0 right-0 top-6 z-50 flex flex-col items-center">
         <div className="w-full max-w-[860px] px-4">
-          {/* Main Unified Ledger Card */}
           <div
             className={`pointer-events-auto relative flex items-stretch gap-4 rounded-[24px] border border-white/70 bg-white/95 p-3 shadow-2xl backdrop-blur-xl transition-all ${
               isBoostActive ? "ring-2 ring-[#39FF14]/40 shadow-[0_0_30px_-5px_#39FF14]" : ""
             }`}
           >
-            {/* Left Section: Avatar */}
             <button
               type="button"
-              onClick={() => setIsProfileOpen(true)}
+              onClick={() => onOpenProfile?.()}
               className="relative flex-shrink-0 group"
             >
               <div className="h-16 w-16 overflow-hidden rounded-[18px] border-2 border-slate-100 shadow-sm transition group-hover:border-[var(--accent-color)]">
@@ -160,9 +164,7 @@ export default function SplitLedger() {
               <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-2 border-white bg-emerald-500 shadow-sm" />
             </button>
 
-            {/* Center Section: Core Display */}
             <div className="flex flex-1 flex-col justify-between py-0.5">
-              {/* Top Row: Hero Yield + Boost Module */}
               <div className="flex items-center justify-between">
                 <div className="flex flex-col">
                   <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400">
@@ -173,7 +175,6 @@ export default function SplitLedger() {
                   </div>
                 </div>
                 
-                {/* Compact Boost Module */}
                 <div className="flex items-center gap-3 bg-slate-100/50 rounded-xl px-3 py-1.5 border border-slate-200/50">
                   <div className="flex flex-col items-end">
                     <span className="text-[8px] font-bold uppercase tracking-widest text-slate-400 leading-none">Status</span>
@@ -217,7 +218,6 @@ export default function SplitLedger() {
                 </div>
               </div>
 
-              {/* Bottom Row: Asset Tray (Spread Out) */}
               <div className="flex items-center justify-between border-t border-slate-100 pt-2 mt-1">
                 <div className="flex items-center gap-2" title="Credits">
                   <div className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-100">
@@ -252,7 +252,6 @@ export default function SplitLedger() {
             </div>
           </div>
 
-          {/* Standalone News Ticker (Inside-Out Toggle) */}
           <div className="mt-3 flex justify-start">
             <motion.div
               layout
@@ -308,8 +307,6 @@ export default function SplitLedger() {
         onSettled={() => setWalletPulseId((prev) => prev + 1)}
         onRequestBoost={startAdBoost}
       />
-
-      <PlayerProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
 
       {toastMessage && (
         <div className="pointer-events-none fixed left-1/2 top-24 z-[650] -translate-x-1/2 rounded-full border border-white/10 bg-slate-950/90 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white shadow-lg">

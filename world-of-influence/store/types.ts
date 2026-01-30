@@ -1,8 +1,22 @@
+import { User } from "@supabase/supabase-js";
 import type { GridBounds } from "@/lib/gridSystem";
 
 export type LatLng = {
   lat: number;
   lng: number;
+};
+
+export type PlayerPresence = {
+  id: string;
+  username: string;
+  location: LatLng;
+  lastActive: number;
+};
+
+export type GlobalDrop = {
+  id: string;
+  location: LatLng;
+  rarity: DropRarity;
 };
 
 export type Drop = {
@@ -276,6 +290,8 @@ export type GameState = {
   locationRequestId: number;
   pickupRadiusMultiplier: number;
   drops: Drop[];
+  otherPlayers: Record<string, PlayerPresence>;
+  globalDrops: GlobalDrop[];
   selectedParcel: GridBounds | null;
   ownedParcels: Record<string, ParcelData>;
   isMinting: boolean;
@@ -304,9 +320,14 @@ export type GameState = {
   ownedLandmarks: string[];
   activeSubscriptions: string[];
   isTickerVisible: boolean;
+  selectedJurisdiction: string | null;
+  user: User | null;
   isSyncing: boolean;
   lastSyncTime: number | null;
   cloudSyncError: string | null;
+  setUser: (user: User | null) => void;
+  setOtherPlayers: (players: Record<string, PlayerPresence>) => void;
+  setGlobalDrops: (drops: GlobalDrop[] | ((current: GlobalDrop[]) => GlobalDrop[])) => void;
   isBoostActive: (timestamp?: number) => boolean;
   setUserLocation: (location: LatLng) => void;
   hydrateFromCloud: () => Promise<void>;
@@ -314,7 +335,7 @@ export type GameState = {
   generateDrops: (origin: LatLng) => void;
   spawnDropsInRadius: (origin: LatLng, count: number, radiusMeters: number) => void;
   collectDrop: (dropId: string) => { type: RewardType; amount: number };
-  isDropInRange: (origin: LatLng, drop: Drop, radiusMeters?: number) => boolean;
+  isDropInRange: (origin: LatLng, drop: { location: LatLng }, radiusMeters?: number) => boolean;
   setSelectedParcel: (parcel: GridBounds | null) => void;
   setIsMinting: (isMinting: boolean) => void;
   setForceNextLegendary: (force: boolean) => void;
@@ -333,6 +354,7 @@ export type GameState = {
   setLeaderboardOpen: (isOpen: boolean) => void;
   setActiveLeaderboardScope: (scope: LeaderboardTab) => void;
   setTickerVisible: (visible: boolean) => void;
+  setSelectedJurisdiction: (region: string | null) => void;
   watchSponsorBriefing: () => { success: boolean; remainingCooldown?: number };
   addLandmark: (landmarkId: string) => void;
   activateSubscription: (tierId: string) => void;

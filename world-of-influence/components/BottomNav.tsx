@@ -3,6 +3,7 @@
 import { Plus, Sparkles, Map, ShoppingBag, Wallet, Gamepad2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import ThemeSwitcher from "./ThemeSwitcher";
+import { supabase } from "@/lib/supabase";
 
 import { 
   useAuthStore,
@@ -59,6 +60,22 @@ export default function BottomNav({ onOpenTerminal, onOpenShop, isTerminalOpen =
   const simulateTreasuryTick = useGovernanceStore((state) => state.simulateTreasuryTick);
   const distributeTreasuryPayout = useGovernanceStore((state) => state.distributeTreasuryPayout);
   const pickupRadius = 50 * pickupRadiusMultiplier;
+
+  const handleSpawnGlobalDrop = async () => {
+    if (!userLocation) return;
+    try {
+      const { error } = await supabase.from("global_drops").insert({
+        location: {
+          lat: userLocation.lat + (Math.random() - 0.5) * 0.002,
+          lng: userLocation.lng + (Math.random() - 0.5) * 0.002,
+        },
+        rarity: "Epic",
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.error("Global drop spawn error:", err);
+    }
+  };
 
   useEffect(() => {
     setMinZoomInput(minMapZoom);
@@ -196,6 +213,13 @@ export default function BottomNav({ onOpenTerminal, onOpenShop, isTerminalOpen =
                     className="rounded-md bg-slate-900 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white"
                   >
                     Spawn 3
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSpawnGlobalDrop}
+                    className="rounded-md bg-[#00C805] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white shadow-[0_0_10px_rgba(0,200,5,0.4)]"
+                  >
+                    Spawn Global
                   </button>
                 </div>
                 <div className="mt-2 space-y-2 rounded-[calc(var(--radius)_-_4px)] border border-slate-200/80 bg-white/90 p-2">
