@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import type { KeyboardEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 
-import { useGameStore } from "@/store/useGameStore";
+import { useEconomyStore } from "@/store/useGameStore";
 
 type PendingPillProps = {
   onClick: () => void;
@@ -46,11 +46,11 @@ const formatCountdown = (totalMs: number) => {
 };
 
 export default function PendingPill({ onClick, className = "", minimal = false }: PendingPillProps) {
-  const getPendingRent = useGameStore((state) => state.getPendingRent);
-  const lastSettledTime = useGameStore((state) => state.lastSettledTime);
-  const escrowLimit = useGameStore((state) => state.escrowLimit);
-  const boostEndTime = useGameStore((state) => state.boostEndTime);
-  const isBoostActiveSelector = useGameStore((state) => state.isBoostActive);
+  const getPendingRent = useEconomyStore((state) => state.getPendingRent);
+  const lastSettledTime = useEconomyStore((state) => state.lastSettledTime);
+  const escrowLimit = useEconomyStore((state) => state.escrowLimit);
+  const boostEndTime = useEconomyStore((state) => state.boostEndTime);
+  const isBoostActiveSelector = useEconomyStore((state) => state.isBoostActive);
   const balanceRef = useRef<HTMLParagraphElement | null>(null);
   const timerRef = useRef<HTMLSpanElement | null>(null);
   const barRef = useRef<HTMLDivElement | null>(null);

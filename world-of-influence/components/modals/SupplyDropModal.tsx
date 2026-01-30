@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Briefcase, Fingerprint, X } from "lucide-react";
 
-import { DropRarity, useGameStore } from "@/store/useGameStore";
+import { DropRarity, useMapStore } from "@/store/useGameStore";
 
 const RARITY_VISUALS: Record<
   DropRarity,
@@ -39,8 +39,8 @@ type SupplyDropModalProps = {
 };
 
 export default function SupplyDropModal({ dropId, onClose }: SupplyDropModalProps) {
-  const drops = useGameStore((state) => state.drops);
-  const collectDrop = useGameStore((state) => state.collectDrop);
+  const drops = useMapStore((state) => state.drops);
+  const collectDrop = useMapStore((state) => state.collectDrop);
   const drop = useMemo(() => drops.find((item) => item.id === dropId), [drops, dropId]);
   const [progress, setProgress] = useState(0);
   const [isHolding, setIsHolding] = useState(false);

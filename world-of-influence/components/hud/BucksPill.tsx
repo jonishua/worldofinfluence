@@ -2,11 +2,11 @@
 
 import { Building2 } from "lucide-react";
 
-import { useGameStore } from "@/store/useGameStore";
+import { useEconomyStore } from "@/store/useGameStore";
 import Odometer from "./Odometer";
 
 export default function BucksPill() {
-  const influenceBucks = useGameStore((state) => state.influenceBucks);
+  const influenceBucks = useEconomyStore((state) => state.influenceBucks);
 
   return (
     <div className="pointer-events-auto flex items-center gap-3 rounded-[12px] bg-white border border-slate-100 px-4 py-2 text-xs font-bold text-slate-900 shadow-sm transition-transform active:scale-95">

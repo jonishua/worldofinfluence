@@ -3,7 +3,11 @@
 import { Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { getBoostMultiplier, useGameStore } from "@/store/useGameStore";
+import { 
+  getBoostMultiplier, 
+  useEconomyStore, 
+  usePropertyStore 
+} from "@/store/useGameStore";
 
 const MAX_STACK_HOURS = 6;
 
@@ -17,9 +21,9 @@ const formatDuration = (totalSeconds: number) => {
 };
 
 export default function BoostControl() {
-  const boostEndTime = useGameStore((state) => state.boostEndTime);
-  const activateBoost = useGameStore((state) => state.activateBoost);
-  const ownedParcels = useGameStore((state) => state.ownedParcels);
+  const boostEndTime = useEconomyStore((state) => state.boostEndTime);
+  const activateBoost = useEconomyStore((state) => state.activateBoost);
+  const ownedParcels = usePropertyStore((state) => state.ownedParcels);
   const [isLoading, setIsLoading] = useState(false);
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const boostMultiplier = getBoostMultiplier(Object.keys(ownedParcels).length);

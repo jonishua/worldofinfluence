@@ -29,7 +29,12 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
 
-import { useGameStore } from "@/store/useGameStore";
+import { 
+  useEconomyStore, 
+  useGovernanceStore, 
+  useMapStore, 
+  usePropertyStore 
+} from "@/store/useGameStore";
 import Odometer from "@/components/hud/Odometer";
 
 // --- Types ---
@@ -173,7 +178,7 @@ const KeyAssetCard = ({
   );
 };
 
-const OpportunityBanner = ({ icon: Icon, title, cta, onClick }: { icon: any, title: string, cta: string, onClick: () => void }) => (
+const OpportunityBanner = ({ icon: Icon, title, cta, onClick }: { icon: React.ElementType, title: string, cta: string, onClick: () => void }) => (
   <button 
     onClick={onClick}
     className="relative flex-shrink-0 w-full rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 p-5 text-white overflow-hidden group active:scale-[0.98] transition-all"
@@ -387,7 +392,7 @@ const ServiceCard = ({
   );
 };
 
-const ProductCard = ({ product, onClick, icon: Icon = Landmark }: { product: ShopProduct; onClick: (p: ShopProduct) => void; icon?: any }) => (
+const ProductCard = ({ product, onClick, icon: Icon = Landmark }: { product: ShopProduct; onClick: (p: ShopProduct) => void; icon?: React.ElementType }) => (
   <button
     onClick={() => onClick(product)}
     className="group flex w-full items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 p-4 transition-all hover:border-[#00C805]/30 hover:bg-white hover:shadow-lg active:scale-[0.98]"
@@ -423,21 +428,19 @@ const ProductCard = ({ product, onClick, icon: Icon = Landmark }: { product: Sho
 type ShopState = "idle" | "processing" | "manufacturing" | "success";
 
 export default function ShopModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const { 
-    influenceBucks, 
-    addInfluenceBucks, 
-    zoningPermits, 
-    addZoningPermits,
-    lastSponsorBriefingTime,
-    watchSponsorBriefing,
-    addLandmark,
-    userLocation,
-    ownedParcels,
-    cityKeysOwned,
-    purchaseCityKey,
-    activateSubscription,
-    activeSubscriptions
-  } = useGameStore();
+  const influenceBucks = useEconomyStore((state) => state.influenceBucks);
+  const addInfluenceBucks = useEconomyStore((state) => state.addInfluenceBucks);
+  const zoningPermits = useEconomyStore((state) => state.zoningPermits);
+  const addZoningPermits = useEconomyStore((state) => state.addZoningPermits);
+  const activeSubscriptions = useGovernanceStore((state) => state.activeSubscriptions);
+  const lastSponsorBriefingTime = useGovernanceStore((state) => state.lastSponsorBriefingTime);
+  const watchSponsorBriefing = useGovernanceStore((state) => state.watchSponsorBriefing);
+  const cityKeysOwned = useGovernanceStore((state) => state.cityKeysOwned);
+  const purchaseCityKey = useGovernanceStore((state) => state.purchaseCityKey);
+  const activateSubscription = useGovernanceStore((state) => state.activateSubscription);
+  const userLocation = useMapStore((state) => state.userLocation);
+  const ownedParcels = usePropertyStore((state) => state.ownedParcels);
+  const addLandmark = usePropertyStore((state) => state.addLandmark);
 
   const cityId = "Austin, TX";
   const stateId = "Texas";
@@ -870,7 +873,7 @@ export default function ShopModal({ isOpen, onClose }: { isOpen: boolean; onClos
                             return (
                               <div key={tier.id} className="relative h-[200px] w-full rounded-2xl bg-slate-100 flex flex-col items-center justify-center text-center p-8 border border-dashed border-slate-300">
                                 <Briefcase className="h-8 w-8 text-slate-300 mb-4" />
-                                <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400">Insider's Club Locked</h3>
+                                <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400">Insider&apos;s Club Locked</h3>
                                 <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mt-2">Ownership of 5 Parcels Required</p>
                               </div>
                             );

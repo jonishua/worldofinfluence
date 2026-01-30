@@ -7,7 +7,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import PendingPill from "@/components/hud/PendingPill";
 import IncomeDetailModal from "@/components/modals/IncomeDetailModal";
 import PlayerProfileModal from "@/components/modals/PlayerProfileModal";
-import { useGameStore } from "@/store/useGameStore";
+import { 
+  useEconomyStore, 
+  useGovernanceStore, 
+} from "@/store/useGameStore";
 
 const formatDuration = (totalSeconds: number) => {
   const minutes = Math.floor(totalSeconds / 60);
@@ -25,20 +28,20 @@ export default function SplitLedger() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isBoostActive, setIsBoostActive] = useState(false);
   const [isWalletPulsing, setIsWalletPulsing] = useState(false);
-  const boostEndTime = useGameStore((state) => state.boostEndTime);
-  const isBoostActiveSelector = useGameStore((state) => state.isBoostActive);
-  const extendBoost = useGameStore((state) => state.extendBoost);
-  const playerAvatar = useGameStore(
+  const boostEndTime = useEconomyStore((state) => state.boostEndTime);
+  const isBoostActiveSelector = useEconomyStore((state) => state.isBoostActive);
+  const extendBoost = useEconomyStore((state) => state.extendBoost);
+  const playerAvatar = useGovernanceStore(
     (state) => state.playerPositions.city?.entry.avatarUrl ?? "/globe.svg",
   );
-  const playerName = useGameStore((state) => state.playerPositions.city?.entry.name ?? "Player");
-  const isTickerVisible = useGameStore((state) => state.isTickerVisible);
-  const setTickerVisible = useGameStore((state) => state.setTickerVisible);
-  const feedEvents = useGameStore((state) => state.feedEvents);
-  const credits = useGameStore((state) => state.credits);
-  const influenceBucks = useGameStore((state) => state.influenceBucks);
-  const zoningPermits = useGameStore((state) => state.zoningPermits);
-  const walletBalance = useGameStore((state) => state.walletBalance);
+  const playerName = useGovernanceStore((state) => state.playerPositions.city?.entry.name ?? "Player");
+  const isTickerVisible = useGovernanceStore((state) => state.isTickerVisible);
+  const setTickerVisible = useGovernanceStore((state) => state.setTickerVisible);
+  const feedEvents = useGovernanceStore((state) => state.feedEvents);
+  const credits = useEconomyStore((state) => state.credits);
+  const influenceBucks = useEconomyStore((state) => state.influenceBucks);
+  const zoningPermits = useEconomyStore((state) => state.zoningPermits);
+  const walletBalance = useEconomyStore((state) => state.walletBalance);
 
   const formattedCredits = Math.floor(credits).toLocaleString();
   const formattedBucks = Math.floor(influenceBucks).toLocaleString();
@@ -55,9 +58,17 @@ export default function SplitLedger() {
   const previousBoost = useRef(false);
   const [showBoostShock, setShowBoostShock] = useState(false);
 
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
+
   useEffect(() => {
     const updateBoost = () => {
-      setIsBoostActive(isBoostActiveSelector(Date.now()));
+      const now = Date.now();
+      setIsBoostActive(isBoostActiveSelector(now));
+      if (boostEndTime) {
+        setRemainingSeconds(Math.max(0, Math.floor((boostEndTime - now) / 1000)));
+      } else {
+        setRemainingSeconds(0);
+      }
     };
     updateBoost();
     const interval = window.setInterval(updateBoost, 1000);
@@ -75,7 +86,7 @@ export default function SplitLedger() {
 
   useEffect(() => {
     if (isBoostActive && !previousBoost.current) {
-      setShowBoostShock(true);
+      setTimeout(() => setShowBoostShock(true), 0);
       if (boostShockTimeout.current) {
         window.clearTimeout(boostShockTimeout.current);
       }
@@ -90,7 +101,7 @@ export default function SplitLedger() {
     if (walletPulseId === 0) {
       return;
     }
-    setIsWalletPulsing(true);
+    setTimeout(() => setIsWalletPulsing(true), 0);
     const timeout = window.setTimeout(() => setIsWalletPulsing(false), 700);
     return () => window.clearTimeout(timeout);
   }, [walletPulseId]);
@@ -175,7 +186,7 @@ export default function SplitLedger() {
                           exit={{ opacity: 0, y: -5 }}
                           className="font-mono text-[10px] font-black text-[#39FF14] leading-none mt-1"
                         >
-                          {formatDuration(boostEndTime ? Math.max(0, Math.floor((boostEndTime - Date.now()) / 1000)) : 0)}
+                          {formatDuration(remainingSeconds)}
                         </motion.span>
                       ) : (
                         <motion.span

@@ -1,10 +1,10 @@
 "use client";
 
-import { useGameStore } from "@/store/useGameStore";
+import { useGovernanceStore } from "@/store/useGameStore";
 
 export default function MayorBadge() {
-  const mayorStatus = useGameStore((state) => state.mayorStatus);
-  const setLeaderboardOpen = useGameStore((state) => state.setLeaderboardOpen);
+  const mayorStatus = useGovernanceStore((state) => state.mayorStatus);
+  const setLeaderboardOpen = useGovernanceStore((state) => state.setLeaderboardOpen);
 
   if (!mayorStatus) {
     return null;

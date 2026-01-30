@@ -4,7 +4,12 @@ import { FileText, HardHat, Landmark, Shield, Wrench } from "lucide-react";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { getBoostMultiplier, useGameStore } from "@/store/useGameStore";
+import { 
+  getBoostMultiplier, 
+  useEconomyStore, 
+  useMapStore, 
+  usePropertyStore 
+} from "@/store/useGameStore";
 
 const rarityLabel = {
   common: { label: "Common", multiplier: "1.0x" },
@@ -21,20 +26,17 @@ const nextRarityMap = {
 } as const;
 
 export default function PropertySheet() {
-  const selectedParcel = useGameStore((state) => state.selectedParcel);
-  const ownedParcels = useGameStore((state) => state.ownedParcels);
-  const influenceBucks = useGameStore((state) => state.influenceBucks);
-  const zoningPermits = useGameStore((state) => state.zoningPermits);
-  const boostEndTime = useGameStore((state) => state.boostEndTime);
-  const isBoostActiveSelector = useGameStore((state) => state.isBoostActive);
-  const extendBoost = useGameStore((state) => state.extendBoost);
-  const upgradeParcel = useGameStore((state) => state.upgradeParcel);
-  const setSelectedParcel = useGameStore((state) => state.setSelectedParcel);
-  const [nowTime, setNowTime] = useState(0);
+  const selectedParcel = useMapStore((state) => state.selectedParcel);
+  const ownedParcels = usePropertyStore((state) => state.ownedParcels);
+  const influenceBucks = useEconomyStore((state) => state.influenceBucks);
+  const zoningPermits = useEconomyStore((state) => state.zoningPermits);
+  const boostEndTime = useEconomyStore((state) => state.boostEndTime);
+  const isBoostActiveSelector = useEconomyStore((state) => state.isBoostActive);
+  const extendBoost = useEconomyStore((state) => state.extendBoost);
+  const upgradeParcel = usePropertyStore((state) => state.upgradeParcel);
+  const setSelectedParcel = useMapStore((state) => state.setSelectedParcel);
+  const [nowTime, setNowTime] = useState(() => (typeof window !== "undefined" ? Date.now() : 0));
   
-  useEffect(() => {
-    setNowTime(Date.now());
-  }, []);
   const [renovationStatus, setRenovationStatus] = useState<
     "idle" | "demolish" | "build" | "reveal"
   >("idle");

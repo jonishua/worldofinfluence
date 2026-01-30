@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, Play } from "lucide-react";
 import confetti from "canvas-confetti";
-import { useGameStore } from "@/store/useGameStore";
+import { useEconomyStore, useGameStore } from "@/store/useGameStore";
 import { calculateSpinResult, getWinTierForResult } from "@/lib/slotsLogic";
 import type { SlotResult, WinTier } from "@/types/slots";
 import Reel from "@/components/slots/Reel";
@@ -17,14 +17,17 @@ type TerminalModalProps = {
 const REEL_STOP_DELAYS = [1500, 2000, 2500]; // ms delays for each reel
 
 export default function TerminalModal({ isOpen, onClose }: TerminalModalProps) {
-  const credits = useGameStore((state) => state.credits);
-  const addCredits = useGameStore((state) => state.addCredits);
-  const addInfluenceBucks = useGameStore((state) => state.addInfluenceBucks);
-  const addZoningPermits = useGameStore((state) => state.addZoningPermits);
+  const credits = useEconomyStore((state) => state.credits);
+  const addCredits = useEconomyStore((state) => state.addCredits);
+  const addInfluenceBucks = useEconomyStore((state) => state.addInfluenceBucks);
+  const addZoningPermits = useEconomyStore((state) => state.addZoningPermits);
 
   const [isSpinning, setIsSpinning] = useState(false);
   const isSpinningRef = useRef(isSpinning);
-  isSpinningRef.current = isSpinning;
+  
+  useEffect(() => {
+    isSpinningRef.current = isSpinning;
+  }, [isSpinning]);
 
   const [spinResult, setSpinResult] = useState<SlotResult | null>(null);
   
@@ -32,18 +35,24 @@ export default function TerminalModal({ isOpen, onClose }: TerminalModalProps) {
   const initializedRef = useRef(false);
   useEffect(() => {
     if (!initializedRef.current && !spinResult) {
-      setSpinResult(calculateSpinResult());
+      setTimeout(() => setSpinResult(calculateSpinResult()), 0);
       initializedRef.current = true;
     }
   }, [spinResult]);
 
   const [autoSpin, setAutoSpin] = useState(false);
   const autoSpinRef = useRef(autoSpin);
-  autoSpinRef.current = autoSpin;
+
+  useEffect(() => {
+    autoSpinRef.current = autoSpin;
+  }, [autoSpin]);
 
   const [betMultiplier, setBetMultiplier] = useState(1);
   const betMultiplierRef = useRef(betMultiplier);
-  betMultiplierRef.current = betMultiplier;
+
+  useEffect(() => {
+    betMultiplierRef.current = betMultiplier;
+  }, [betMultiplier]);
 
   const [reelsStopped, setReelsStopped] = useState([false, false, false]);
   const [winTier, setWinTier] = useState<WinTier | null>(null);
@@ -128,24 +137,26 @@ export default function TerminalModal({ isOpen, onClose }: TerminalModalProps) {
   useEffect(() => {
     // Only trigger a new spin if auto-spin was just turned on and we are idle
     if (autoSpin && !isSpinning && isOpen && credits >= betMultiplier && !autoSpinTimeoutRef.current) {
-      handleSpin();
+      setTimeout(() => handleSpin(), 0);
     }
   }, [autoSpin, isOpen, credits, betMultiplier, isSpinning, handleSpin]); // Added missing dependencies
 
   // Reset state when modal opens/closes
   useEffect(() => {
     if (!isOpen) {
-      setIsSpinning(false);
-      isSpinningRef.current = false;
-      // We no longer clear spinResult here so it persists
-      setReelsStopped([false, false, false]);
-      setWinTier(null);
-      setShowWinDisplay(false);
-      setAutoSpin(false);
-      autoSpinRef.current = false;
-      setBetMultiplier(1);
-      betMultiplierRef.current = 1;
-      setIsShaking(false);
+      setTimeout(() => {
+        setIsSpinning(false);
+        isSpinningRef.current = false;
+        // We no longer clear spinResult here so it persists
+        setReelsStopped([false, false, false]);
+        setWinTier(null);
+        setShowWinDisplay(false);
+        setAutoSpin(false);
+        autoSpinRef.current = false;
+        setBetMultiplier(1);
+        betMultiplierRef.current = 1;
+        setIsShaking(false);
+      }, 0);
       
       if (autoSpinTimeoutRef.current) clearTimeout(autoSpinTimeoutRef.current);
       if (resultTimeoutRef.current) clearTimeout(resultTimeoutRef.current);

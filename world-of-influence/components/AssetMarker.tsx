@@ -48,12 +48,14 @@ export default function AssetMarker({ position, rarity, lastUpgradedAt }: AssetM
   }, [lastUpgradedAt]);
 
   const icon = useMemo(() => {
-    const Icon = rarityIcon(rarity);
     return L.divIcon({
       className: `map-asset-icon map-asset-icon--3d ${isPopping ? "map-asset-icon--pop" : ""}`,
       html: renderToStaticMarkup(
         <div style={{ color: rarityColor[rarity] }}>
-          <Icon className="h-5 w-5" />
+          {rarity === "legendary" && <Crown className="h-5 w-5" />}
+          {rarity === "epic" && <Home className="h-5 w-5" />}
+          {rarity === "rare" && <Store className="h-5 w-5" />}
+          {rarity === "common" && <Zap className="h-5 w-5" />}
         </div>,
       ),
       iconSize: [28, 28],

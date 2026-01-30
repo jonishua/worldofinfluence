@@ -2,10 +2,10 @@
 
 import { Trophy } from "lucide-react";
 
-import { useGameStore } from "@/store/useGameStore";
+import { useGovernanceStore } from "@/store/useGameStore";
 
 export default function LeaderboardWidget() {
-  const setLeaderboardOpen = useGameStore((state) => state.setLeaderboardOpen);
+  const setLeaderboardOpen = useGovernanceStore((state) => state.setLeaderboardOpen);
 
   return (
     <div className="pointer-events-none absolute bottom-[104px] left-6 z-[520]">

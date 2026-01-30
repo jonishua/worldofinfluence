@@ -37,8 +37,14 @@ export default function Reel({
   }, [onStop]);
 
   useEffect(() => {
+    if (isSpinning) {
+      const timeout = window.setTimeout(() => setIsStopped(false), 0);
+      return () => window.clearTimeout(timeout);
+    }
+  }, [isSpinning]);
+
+  useEffect(() => {
     if (!isSpinning) {
-      setIsStopped(false);
       return;
     }
 

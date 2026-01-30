@@ -2,10 +2,10 @@
 
 import { Coins } from "lucide-react";
 
-import { useGameStore } from "@/store/useGameStore";
+import { useEconomyStore } from "@/store/useGameStore";
 
 export default function CreditsPill() {
-  const credits = useGameStore((state) => state.credits);
+  const credits = useEconomyStore((state) => state.credits);
 
   return (
     <div className="pointer-events-none flex items-center gap-2 rounded-full bg-slate-900/50 px-3 py-2 text-xs font-semibold text-white shadow-lg backdrop-blur">

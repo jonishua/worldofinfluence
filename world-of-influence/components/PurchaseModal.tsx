@@ -4,7 +4,11 @@ import confetti from "canvas-confetti";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { useGameStore } from "@/store/useGameStore";
+import { 
+  useEconomyStore, 
+  useMapStore, 
+  usePropertyStore 
+} from "@/store/useGameStore";
 
 const PURCHASE_COST = 100;
 
@@ -52,13 +56,13 @@ const rarityConfig = {
 type Phase = "buy" | "minting" | "reveal";
 
 export default function PurchaseModal() {
-  const selectedParcel = useGameStore((state) => state.selectedParcel);
-  const ownedParcels = useGameStore((state) => state.ownedParcels);
-  const influenceBucks = useGameStore((state) => state.influenceBucks);
-  const isMinting = useGameStore((state) => state.isMinting);
-  const setIsMinting = useGameStore((state) => state.setIsMinting);
-  const buyParcel = useGameStore((state) => state.buyParcel);
-  const setSelectedParcel = useGameStore((state) => state.setSelectedParcel);
+  const selectedParcel = useMapStore((state) => state.selectedParcel);
+  const ownedParcels = usePropertyStore((state) => state.ownedParcels);
+  const influenceBucks = useEconomyStore((state) => state.influenceBucks);
+  const isMinting = usePropertyStore((state) => state.isMinting);
+  const setIsMinting = usePropertyStore((state) => state.setIsMinting);
+  const buyParcel = usePropertyStore((state) => state.buyParcel);
+  const setSelectedParcel = useMapStore((state) => state.setSelectedParcel);
   const [phase, setPhase] = useState<Phase>("buy");
   const [stepIndex, setStepIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);

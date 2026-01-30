@@ -8,7 +8,10 @@ import {
   computeBaseRentRate,
   computeRentRate,
   getBoostMultiplier,
-  useGameStore,
+} from "@/store/economyUtils";
+import {
+  useEconomyStore,
+  usePropertyStore,
 } from "@/store/useGameStore";
 
 const formatDuration = (totalSeconds: number) => {
@@ -21,14 +24,14 @@ const formatDuration = (totalSeconds: number) => {
 };
 
 export default function BalanceTicker() {
-  const ownedParcels = useGameStore((state) => state.ownedParcels);
-  const boostEndTime = useGameStore((state) => state.boostEndTime);
+  const ownedParcels = usePropertyStore((state) => state.ownedParcels);
+  const boostEndTime = useEconomyStore((state) => state.boostEndTime);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [remainingSeconds, setRemainingSeconds] = useState(0);
 
   const isBoostActive = useMemo(() => {
     if (!boostEndTime) return false;
-    return boostEndTime > Date.now();
+    return remainingSeconds > 0;
   }, [boostEndTime, remainingSeconds]);
   
   const boostMultiplier = getBoostMultiplier(Object.keys(ownedParcels).length);

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Roboto_Mono } from "next/font/google";
 import "leaflet/dist/leaflet.css";
 import "./globals.css";
+import { SyncManager } from "@/components/auth/SyncManager";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,6 +29,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${robotoMono.variable} antialiased`}
       >
+        <SyncManager />
         {children}
       </body>
     </html>

@@ -23,7 +23,13 @@ import {
 } from "@/lib/gridSystem";
 import { themeById, useThemeStore } from "@/lib/theme";
 import AssetMarker from "@/components/AssetMarker";
-import { Drop, DropRarity, LatLng, useGameStore } from "@/store/useGameStore";
+import { 
+  Drop, 
+  DropRarity, 
+  LatLng, 
+  useMapStore, 
+  usePropertyStore 
+} from "@/store/useGameStore";
 import SupplyDropModal from "@/components/modals/SupplyDropModal";
 
 const DEFAULT_LOCATION = {
@@ -204,20 +210,21 @@ export default function GameMap() {
   const accentColor = useThemeStore(
     (state) => themeById[state.currentThemeId].accentColor,
   );
-  const userLocation = useGameStore((state) => state.userLocation);
-  const drops = useGameStore((state) => state.drops);
-  const setUserLocation = useGameStore((state) => state.setUserLocation);
-  const generateDrops = useGameStore((state) => state.generateDrops);
-  const isDropInRange = useGameStore((state) => state.isDropInRange);
-  const locationRequestId = useGameStore((state) => state.locationRequestId);
-  const selectedParcel = useGameStore((state) => state.selectedParcel);
-  const ownedParcels = useGameStore((state) => state.ownedParcels);
-  const setSelectedParcel = useGameStore((state) => state.setSelectedParcel);
-  const mapZoom = useGameStore((state) => state.mapZoom);
-  const setMapZoom = useGameStore((state) => state.setMapZoom);
-  const minMapZoom = useGameStore((state) => state.minMapZoom);
-  const maxMapZoom = useGameStore((state) => state.maxMapZoom);
-  const pickupRadiusMultiplier = useGameStore((state) => state.pickupRadiusMultiplier);
+  const userLocation = useMapStore((state) => state.userLocation);
+  const drops = useMapStore((state) => state.drops);
+  const setUserLocation = useMapStore((state) => state.setUserLocation);
+  const generateDrops = useMapStore((state) => state.generateDrops);
+  const isDropInRange = useMapStore((state) => state.isDropInRange);
+  const locationRequestId = useMapStore((state) => state.locationRequestId);
+  const selectedParcel = useMapStore((state) => state.selectedParcel);
+  const setSelectedParcel = useMapStore((state) => state.setSelectedParcel);
+  const mapZoom = useMapStore((state) => state.mapZoom);
+  const setMapZoom = useMapStore((state) => state.setMapZoom);
+  const minMapZoom = useMapStore((state) => state.minMapZoom);
+  const maxMapZoom = useMapStore((state) => state.maxMapZoom);
+  const pickupRadiusMultiplier = useMapStore((state) => state.pickupRadiusMultiplier);
+
+  const ownedParcels = usePropertyStore((state) => state.ownedParcels);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isUserInteracting, setIsUserInteracting] = useState(false);
   const toastTimeout = useRef<number | null>(null);

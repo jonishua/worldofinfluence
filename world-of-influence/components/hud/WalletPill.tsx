@@ -3,7 +3,7 @@
 import { Lock } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { useGameStore } from "@/store/useGameStore";
+import { useEconomyStore } from "@/store/useGameStore";
 
 type WalletPillProps = {
   onClick: () => void;
@@ -11,16 +11,19 @@ type WalletPillProps = {
 };
 
 export default function WalletPill({ onClick, pulseId }: WalletPillProps) {
-  const walletBalance = useGameStore((state) => state.walletBalance);
+  const walletBalance = useEconomyStore((state) => state.walletBalance);
   const [isPulsing, setIsPulsing] = useState(false);
 
   useEffect(() => {
     if (pulseId === 0) {
       return;
     }
-    setIsPulsing(true);
-    const timeout = window.setTimeout(() => setIsPulsing(false), 700);
-    return () => window.clearTimeout(timeout);
+    const startTimeout = window.setTimeout(() => setIsPulsing(true), 0);
+    const endTimeout = window.setTimeout(() => setIsPulsing(false), 700);
+    return () => {
+      window.clearTimeout(startTimeout);
+      window.clearTimeout(endTimeout);
+    };
   }, [pulseId]);
 
   return (

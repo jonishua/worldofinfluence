@@ -4,14 +4,14 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Coins, FileText, Landmark } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import { useGameStore } from "@/store/useGameStore";
+import { useEconomyStore } from "@/store/useGameStore";
 
 const TICKER_INTERVAL_MS = 5000;
 
 export default function AssetTicker() {
-  const influenceBucks = useGameStore((state) => state.influenceBucks);
-  const credits = useGameStore((state) => state.credits);
-  const zoningPermits = useGameStore((state) => state.zoningPermits);
+  const influenceBucks = useEconomyStore((state) => state.influenceBucks);
+  const credits = useEconomyStore((state) => state.credits);
+  const zoningPermits = useEconomyStore((state) => state.zoningPermits);
   const [index, setIndex] = useState(0);
 
   const items = useMemo(

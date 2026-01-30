@@ -2,15 +2,15 @@
 
 import { useEffect, useRef } from "react";
 
-import { useGameStore } from "@/store/useGameStore";
+import { useEconomyStore } from "@/store/useGameStore";
 
 type LiveBalanceProps = {
   className?: string;
 };
 
 export default function LiveBalance({ className }: LiveBalanceProps) {
-  const walletBalance = useGameStore((state) => state.walletBalance);
-  const getPendingRent = useGameStore((state) => state.getPendingRent);
+  const walletBalance = useEconomyStore((state) => state.walletBalance);
+  const getPendingRent = useEconomyStore((state) => state.getPendingRent);
   const balanceRef = useRef<HTMLSpanElement | null>(null);
   const rafId = useRef(0);
 

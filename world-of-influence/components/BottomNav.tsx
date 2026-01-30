@@ -2,9 +2,16 @@
 
 import { Plus, Sparkles, Map, ShoppingBag, Wallet, Gamepad2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import ThemeSwitcher from "./ThemeSwitcher";
 
-import ThemeSwitcher from "@/components/ThemeSwitcher";
-import { useGameStore } from "@/store/useGameStore";
+import { 
+  useAuthStore,
+  useEconomyStore,
+  useMapStore,
+  usePropertyStore,
+  useGovernanceStore,
+  useGameStore
+} from "@/store/useGameStore";
 
 type BottomNavProps = {
   onOpenTerminal?: () => void;
@@ -25,27 +32,32 @@ export default function BottomNav({ onOpenTerminal, onOpenShop, isTerminalOpen =
   const [minZoomInput, setMinZoomInput] = useState(17);
   const [maxZoomInput, setMaxZoomInput] = useState(21);
   const [boostDurationSeconds, setBoostDurationSeconds] = useState(60);
-  const addWalletBalance = useGameStore((state) => state.addWalletBalance);
-  const addInfluenceBucks = useGameStore((state) => state.addInfluenceBucks);
-  const addCredits = useGameStore((state) => state.addCredits);
-  const addZoningPermits = useGameStore((state) => state.addZoningPermits);
-  const setPickupRadiusMultiplier = useGameStore((state) => state.setPickupRadiusMultiplier);
-  const pickupRadiusMultiplier = useGameStore((state) => state.pickupRadiusMultiplier);
-  const userLocation = useGameStore((state) => state.userLocation);
-  const spawnDropsInRadius = useGameStore((state) => state.spawnDropsInRadius);
-  const minMapZoom = useGameStore((state) => state.minMapZoom);
-  const maxMapZoom = useGameStore((state) => state.maxMapZoom);
-  const mapZoom = useGameStore((state) => state.mapZoom);
-  const forceNextLegendary = useGameStore((state) => state.forceNextLegendary);
-  const setForceNextLegendary = useGameStore((state) => state.setForceNextLegendary);
-  const setOwnedParcelsCount = useGameStore((state) => state.setOwnedParcelsCount);
-  const boostDurationMs = useGameStore((state) => state.boostDurationMs);
-  const setMapZoomLimits = useGameStore((state) => state.setMapZoomLimits);
-  const setBoostDurationMs = useGameStore((state) => state.setBoostDurationMs);
-  const resetGame = useGameStore((state) => state.resetGame);
-  const purchaseCityKey = useGameStore((state) => state.purchaseCityKey);
-  const simulateTreasuryTick = useGameStore((state) => state.simulateTreasuryTick);
-  const distributeTreasuryPayout = useGameStore((state) => state.distributeTreasuryPayout);
+  
+  const addWalletBalance = useEconomyStore((state) => state.addWalletBalance);
+  const addInfluenceBucks = useEconomyStore((state) => state.addInfluenceBucks);
+  const addCredits = useEconomyStore((state) => state.addCredits);
+  const addZoningPermits = useEconomyStore((state) => state.addZoningPermits);
+  const boostDurationMs = useEconomyStore((state) => state.boostDurationMs);
+  const setBoostDurationMs = useEconomyStore((state) => state.setBoostDurationMs);
+
+  const setPickupRadiusMultiplier = useMapStore((state) => state.setPickupRadiusMultiplier);
+  const pickupRadiusMultiplier = useMapStore((state) => state.pickupRadiusMultiplier);
+  const userLocation = useMapStore((state) => state.userLocation);
+  const spawnDropsInRadius = useMapStore((state) => state.spawnDropsInRadius);
+  const minMapZoom = useMapStore((state) => state.minMapZoom);
+  const maxMapZoom = useMapStore((state) => state.maxMapZoom);
+  const mapZoom = useMapStore((state) => state.mapZoom);
+  const setMapZoomLimits = useMapStore((state) => state.setMapZoomLimits);
+
+  const forceNextLegendary = usePropertyStore((state) => state.forceNextLegendary);
+  const setForceNextLegendary = usePropertyStore((state) => state.setForceNextLegendary);
+  const setOwnedParcelsCount = usePropertyStore((state) => state.setOwnedParcelsCount);
+
+  const resetGame = useAuthStore((state) => state.resetGame);
+
+  const purchaseCityKey = useGovernanceStore((state) => state.purchaseCityKey);
+  const simulateTreasuryTick = useGovernanceStore((state) => state.simulateTreasuryTick);
+  const distributeTreasuryPayout = useGovernanceStore((state) => state.distributeTreasuryPayout);
   const pickupRadius = 50 * pickupRadiusMultiplier;
 
   useEffect(() => {

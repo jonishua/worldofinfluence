@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 
-import { useGameStore } from "@/store/useGameStore";
+import { useGovernanceStore } from "@/store/useGameStore";
 
 type PlayerProfileModalProps = {
   isOpen: boolean;
@@ -10,8 +10,8 @@ type PlayerProfileModalProps = {
 };
 
 export default function PlayerProfileModal({ isOpen, onClose }: PlayerProfileModalProps) {
-  const playerPosition = useGameStore((state) => state.playerPositions.city);
-  const cityKeysOwned = useGameStore((state) => state.cityKeysOwned);
+  const playerPosition = useGovernanceStore((state) => state.playerPositions.city);
+  const cityKeysOwned = useGovernanceStore((state) => state.cityKeysOwned);
   const playerName = playerPosition?.entry.name ?? "Player";
   const playerTitle = playerPosition?.entry.title ?? "Investor";
   const playerRegion = playerPosition?.entry.region ?? "Unknown";

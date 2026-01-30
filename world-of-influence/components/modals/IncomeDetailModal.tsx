@@ -6,7 +6,10 @@ import {
   computeBaseRentRate,
   computeRentRate,
   getBoostMultiplier,
-  useGameStore,
+} from "@/store/economyUtils";
+import {
+  useEconomyStore,
+  usePropertyStore,
 } from "@/store/useGameStore";
 
 type IncomeDetailModalProps = {
@@ -44,13 +47,13 @@ export default function IncomeDetailModal({
   onSettled,
   onRequestBoost,
 }: IncomeDetailModalProps) {
-  const ownedParcels = useGameStore((state) => state.ownedParcels);
-  const boostEndTime = useGameStore((state) => state.boostEndTime);
-  const isBoostActiveSelector = useGameStore((state) => state.isBoostActive);
-  const extendBoost = useGameStore((state) => state.extendBoost);
-  const getPendingRent = useGameStore((state) => state.getPendingRent);
-  const settleFunds = useGameStore((state) => state.settleFunds);
-  const reinvestFunds = useGameStore((state) => state.reinvestFunds);
+  const ownedParcels = usePropertyStore((state) => state.ownedParcels);
+  const boostEndTime = useEconomyStore((state) => state.boostEndTime);
+  const isBoostActiveSelector = useEconomyStore((state) => state.isBoostActive);
+  const extendBoost = useEconomyStore((state) => state.extendBoost);
+  const getPendingRent = useEconomyStore((state) => state.getPendingRent);
+  const settleFunds = useEconomyStore((state) => state.settleFunds);
+  const reinvestFunds = useEconomyStore((state) => state.reinvestFunds);
   const [pendingAmount, setPendingAmount] = useState(0);
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [nowTime, setNowTime] = useState(0);
@@ -73,6 +76,7 @@ export default function IncomeDetailModal({
     const updateRemaining = () => {
       const now = Date.now();
       setNowTime(now);
+      setPendingAmount(getPendingRent(now));
       if (!boostEndTime) {
         setRemainingSeconds(0);
         return;
@@ -83,14 +87,17 @@ export default function IncomeDetailModal({
     updateRemaining();
     const interval = window.setInterval(updateRemaining, 1000);
     return () => window.clearInterval(interval);
-  }, [boostEndTime, isOpen]);
+  }, [boostEndTime, isOpen, getPendingRent]);
 
+  // Combined with updateRemaining above to avoid cascading renders
+  /*
   useEffect(() => {
     if (!isOpen) {
       return;
     }
     setPendingAmount(getPendingRent(nowTime || Date.now()));
   }, [getPendingRent, isOpen, nowTime]);
+  */
 
   const formatDuration = (totalSeconds: number) => {
     const minutes = Math.floor(totalSeconds / 60);

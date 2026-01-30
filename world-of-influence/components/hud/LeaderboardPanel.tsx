@@ -6,7 +6,7 @@ import {
   LeaderboardEntry,
   LeaderboardScope,
   LeaderboardTab,
-  useGameStore,
+  useGovernanceStore,
 } from "@/store/useGameStore";
 
 const scopeLabels: Record<LeaderboardTab, string> = {
@@ -20,13 +20,13 @@ const capEntries = (entries: LeaderboardEntry[], limit = 20) =>
   entries.length > limit ? entries.slice(0, limit) : entries;
 
 export default function LeaderboardPanel() {
-  const isLeaderboardOpen = useGameStore((state) => state.isLeaderboardOpen);
-  const setLeaderboardOpen = useGameStore((state) => state.setLeaderboardOpen);
-  const activeScope = useGameStore((state) => state.activeLeaderboardScope);
-  const setActiveScope = useGameStore((state) => state.setActiveLeaderboardScope);
-  const leaderboards = useGameStore((state) => state.leaderboards);
-  const playerPositions = useGameStore((state) => state.playerPositions);
-  const officeholders = useGameStore((state) => state.officeholders);
+  const isLeaderboardOpen = useGovernanceStore((state) => state.isLeaderboardOpen);
+  const setLeaderboardOpen = useGovernanceStore((state) => state.setLeaderboardOpen);
+  const activeScope = useGovernanceStore((state) => state.activeLeaderboardScope);
+  const setActiveScope = useGovernanceStore((state) => state.setActiveLeaderboardScope);
+  const leaderboards = useGovernanceStore((state) => state.leaderboards);
+  const playerPositions = useGovernanceStore((state) => state.playerPositions);
+  const officeholders = useGovernanceStore((state) => state.officeholders);
 
   const entries = useMemo(
     () =>
