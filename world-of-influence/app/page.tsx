@@ -13,6 +13,9 @@ import ThemeProvider from "@/components/ThemeProvider";
 import LeaderboardPanel from "@/components/hud/LeaderboardPanel";
 import LeaderboardWidget from "@/components/hud/LeaderboardWidget";
 import SplitLedger from "@/components/hud/SplitLedger";
+import SatelliteWidget from "@/components/hud/SatelliteWidget";
+import SatelliteOverlay from "@/components/hud/SatelliteOverlay";
+import SatelliteSearchBar from "@/components/hud/SatelliteSearchBar";
 import { useGovernanceStore } from "@/store/useGameStore";
 import { AnimatePresence } from "framer-motion";
 
@@ -27,11 +30,14 @@ export default function Home() {
     <ThemeProvider>
       <div className="relative h-screen w-screen overflow-hidden bg-[var(--bg-color)] text-[var(--text-primary)]">
         <GameMapClient />
+        <SatelliteOverlay />
+        <SatelliteSearchBar />
         <SplitLedger 
           onOpenProfile={() => setIsProfileOpen(true)}
           isProfileOpen={isProfileOpen}
         />
         <LeaderboardWidget />
+        <SatelliteWidget />
         <BottomNav 
           onOpenTerminal={() => setIsTerminalOpen(true)} 
           isTerminalOpen={isTerminalOpen} 

@@ -2,7 +2,14 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { GameState, ParcelData, GovernanceOfficeholders, PayoutEvent, MOCK_GOVERNANCE_OFFICEHOLDERS } from "./types";
+import { 
+  GameState, 
+  ParcelData, 
+  GovernanceOfficeholders, 
+  PayoutEvent, 
+  MOCK_GOVERNANCE_OFFICEHOLDERS,
+  SATELLITE_MAX_CHARGES
+} from "./types";
 import { normalizeParcelData } from "./propertyUtils";
 import { createAuthSlice, AuthSlice } from "./slices/authSlice";
 import { createEconomySlice, EconomySlice } from "./slices/economySlice";
@@ -54,33 +61,42 @@ export const useGameStore = create<GameState>()(
           lastSponsorBriefingTime: Number.isFinite(state.lastSponsorBriefingTime)
             ? state.lastSponsorBriefingTime
             : 0,
-          ownedLandmarks: Array.isArray(state.ownedLandmarks) ? state.ownedLandmarks : [],
-          activeSubscriptions: Array.isArray(state.activeSubscriptions) ? state.activeSubscriptions : [],
-        });
-      },
-      partialize: (state) => ({
-        rentBalance: state.rentBalance,
-        walletBalance: state.walletBalance,
-        credits: state.credits,
-        influenceBucks: state.influenceBucks,
-        zoningPermits: state.zoningPermits,
-        pickupRadiusMultiplier: state.pickupRadiusMultiplier,
-        minMapZoom: state.minMapZoom,
-        maxMapZoom: state.maxMapZoom,
-        lastSettledTime: state.lastSettledTime,
-        escrowLimit: state.escrowLimit,
-        boostEndTime: state.boostEndTime,
-        boostDurationMs: state.boostDurationMs,
-        ownedParcels: state.ownedParcels,
-        cityKeysOwned: state.cityKeysOwned,
-        treasuryBalances: state.treasuryBalances,
-        governanceBalances: state.governanceBalances,
-        governanceOfficeholders: state.governanceOfficeholders,
-        payoutEvents: state.payoutEvents,
-        lastSponsorBriefingTime: state.lastSponsorBriefingTime,
-        ownedLandmarks: state.ownedLandmarks,
-        activeSubscriptions: state.activeSubscriptions,
-      }),
+        ownedLandmarks: Array.isArray(state.ownedLandmarks) ? state.ownedLandmarks : [],
+        activeSubscriptions: Array.isArray(state.activeSubscriptions) ? state.activeSubscriptions : [],
+        satelliteMode: !!state.satelliteMode,
+        satelliteCameraLocation: state.satelliteCameraLocation || null,
+        flyToTarget: null,
+        uplinkCharges: Number.isFinite(state.uplinkCharges) ? state.uplinkCharges : SATELLITE_MAX_CHARGES,
+        lastUplinkRefillTime: Number.isFinite(state.lastUplinkRefillTime) ? state.lastUplinkRefillTime : Date.now(),
+      });
+    },
+    partialize: (state) => ({
+      rentBalance: state.rentBalance,
+      walletBalance: state.walletBalance,
+      credits: state.credits,
+      influenceBucks: state.influenceBucks,
+      zoningPermits: state.zoningPermits,
+      pickupRadiusMultiplier: state.pickupRadiusMultiplier,
+      minMapZoom: state.minMapZoom,
+      maxMapZoom: state.maxMapZoom,
+      lastSettledTime: state.lastSettledTime,
+      escrowLimit: state.escrowLimit,
+      boostEndTime: state.boostEndTime,
+      boostDurationMs: state.boostDurationMs,
+      ownedParcels: state.ownedParcels,
+      cityKeysOwned: state.cityKeysOwned,
+      treasuryBalances: state.treasuryBalances,
+      governanceBalances: state.governanceBalances,
+      governanceOfficeholders: state.governanceOfficeholders,
+      payoutEvents: state.payoutEvents,
+      lastSponsorBriefingTime: state.lastSponsorBriefingTime,
+      ownedLandmarks: state.ownedLandmarks,
+      activeSubscriptions: state.activeSubscriptions,
+      satelliteMode: state.satelliteMode,
+      satelliteCameraLocation: state.satelliteCameraLocation,
+      uplinkCharges: state.uplinkCharges,
+      lastUplinkRefillTime: state.lastUplinkRefillTime,
+    }),
     }
   )
 );

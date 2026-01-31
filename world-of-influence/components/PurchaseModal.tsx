@@ -7,7 +7,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { 
   useEconomyStore, 
   useMapStore, 
-  usePropertyStore 
+  usePropertyStore,
+  REMOTE_FILING_FEE_MULTIPLIER
 } from "@/store/useGameStore";
 
 const PURCHASE_COST = 100;
@@ -57,8 +58,10 @@ type Phase = "buy" | "minting" | "reveal";
 
 export default function PurchaseModal() {
   const selectedParcel = useMapStore((state) => state.selectedParcel);
+  const satelliteMode = useMapStore((state) => state.satelliteMode);
   const ownedParcels = usePropertyStore((state) => state.ownedParcels);
   const influenceBucks = useEconomyStore((state) => state.influenceBucks);
+  const activeSubscriptions = useEconomyStore((state) => state.activeSubscriptions);
   const isMinting = usePropertyStore((state) => state.isMinting);
   const setIsMinting = usePropertyStore((state) => state.setIsMinting);
   const buyParcel = usePropertyStore((state) => state.buyParcel);
@@ -71,6 +74,11 @@ export default function PurchaseModal() {
   const lastRevealId = useRef<string | null>(null);
   const confettiCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const confettiRainIntervalRef = useRef<number | null>(null);
+
+  const isSubscriber = activeSubscriptions.length > 0;
+  const applyRemoteFee = satelliteMode && !isSubscriber;
+  const remoteFee = applyRemoteFee ? Math.ceil(PURCHASE_COST * REMOTE_FILING_FEE_MULTIPLIER) : 0;
+  const totalCost = PURCHASE_COST + remoteFee;
 
   const isOwned = selectedParcel ? Boolean(ownedParcels[selectedParcel.id]) : false;
 
@@ -108,7 +116,7 @@ export default function PurchaseModal() {
     if (!selectedParcel || isOwned) {
       return;
     }
-    if (influenceBucks < PURCHASE_COST) {
+    if (influenceBucks < totalCost) {
       setError("Insufficient Influence Bucks.");
       return;
     }
@@ -122,7 +130,7 @@ export default function PurchaseModal() {
       window.setTimeout(() => setStepIndex(1), 1000),
       window.setTimeout(() => setStepIndex(2), 2000),
       window.setTimeout(() => {
-        const purchased = buyParcel(selectedParcel, PURCHASE_COST);
+        const purchased = buyParcel(selectedParcel, totalCost);
         setMintedId(purchased?.id ?? null);
         setPhase("reveal");
         setIsMinting(false);
@@ -221,16 +229,47 @@ export default function PurchaseModal() {
           >
             <div className="text-4xl">📍</div>
             <p className="mt-3 text-2xl font-extrabold text-[var(--text-primary)]">
-              Acquire Parcel?
+              {satelliteMode ? "Remote Acquisition" : "Acquire Parcel?"}
             </p>
-            <p className="mt-2 text-sm text-slate-500">
-              Coordinates:{" "}
-              <span className="font-mono">
-                {selectedParcel.center.lat.toFixed(4)}, {selectedParcel.center.lng.toFixed(4)}
-              </span>
-              <br />
-              Price: <strong>{PURCHASE_COST} Influence Bucks</strong>
+            <div className="mt-4 space-y-2 rounded-xl bg-slate-50 p-4 dark:bg-slate-900/50">
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-500">Base Land Value</span>
+                <span className="font-mono font-bold">{PURCHASE_COST} IB</span>
+              </div>
+              
+              {satelliteMode && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500">Remote Filing Fee</span>
+                  <span className={`font-mono font-bold ${isSubscriber ? 'text-[#00C805]' : 'text-rose-500'}`}>
+                    {isSubscriber ? '-0 IB' : `+${remoteFee} IB`}
+                  </span>
+                </div>
+              )}
+
+              {satelliteMode && isSubscriber && (
+                <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-[#00C805]">
+                  <span>Explorer Pass Discount</span>
+                  <span>-100% Fee</span>
+                </div>
+              )}
+
+              <div className="border-t border-slate-200 pt-2 dark:border-slate-800">
+                <div className="flex justify-between text-base font-bold">
+                  <span>Total Cost</span>
+                  <span className="font-mono text-[var(--accent-color)]">{totalCost} IB</span>
+                </div>
+              </div>
+            </div>
+
+            <p className="mt-4 text-[10px] uppercase tracking-widest text-slate-400">
+              Coordinates: {selectedParcel.center.lat.toFixed(4)}, {selectedParcel.center.lng.toFixed(4)}
             </p>
+
+            {applyRemoteFee && (
+              <button className="mt-4 text-[10px] font-bold uppercase tracking-wider text-[#F59E0B] hover:underline">
+                Waive fees with Explorer Pass
+              </button>
+            )}
             {error && (
               <p className="mt-3 text-xs font-semibold uppercase tracking-[0.18em] text-rose-500">
                 {error}

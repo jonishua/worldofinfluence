@@ -11,7 +11,9 @@ import {
   ACTIVE_DROP_MAX,
   ACTIVE_DROP_RADIUS_METERS,
   RESERVE_DROP_COUNT,
-  RESERVE_DROP_RADIUS_METERS
+  RESERVE_DROP_RADIUS_METERS,
+  SATELLITE_MAX_CHARGES,
+  SATELLITE_UPLINK_REFILL_MS
 } from "../types";
 import { GridBounds } from "@/lib/gridSystem";
 import { metersToKilometers, debounceSync } from "../utils";
@@ -29,7 +31,14 @@ export interface MapSlice {
   mapZoom: number;
   minMapZoom: number;
   maxMapZoom: number;
+  satelliteMode: boolean;
+  satelliteCameraLocation: LatLng | null;
+  flyToTarget: LatLng | null;
+  uplinkCharges: number;
+  lastUplinkRefillTime: number;
   setUserLocation: (location: LatLng) => void;
+  setSatelliteCameraLocation: (location: LatLng | null) => void;
+  triggerMapFlyTo: (location: LatLng | null) => void;
   setOtherPlayers: (players: Record<string, PlayerPresence>) => void;
   setGlobalDrops: (drops: GlobalDrop[] | ((current: GlobalDrop[]) => GlobalDrop[])) => void;
   setMapZoom: (zoom: number) => void;
@@ -40,6 +49,9 @@ export interface MapSlice {
   spawnDropsInRadius: (origin: LatLng, count: number, radiusMeters: number) => void;
   collectDrop: (dropId: string) => { type: RewardType; amount: number };
   isDropInRange: (origin: LatLng, drop: { location: LatLng }, radiusMeters?: number) => boolean;
+  toggleSatelliteMode: () => void;
+  consumeUplinkCharge: () => boolean;
+  refillUplinkCharges: () => void;
 }
 
 export const createMapSlice: StateCreator<GameState, [], [], MapSlice> = (set, get) => ({
@@ -54,8 +66,15 @@ export const createMapSlice: StateCreator<GameState, [], [], MapSlice> = (set, g
   mapZoom: 17,
   minMapZoom: 17,
   maxMapZoom: 21,
+  satelliteMode: false,
+  satelliteCameraLocation: null,
+  flyToTarget: null,
+  uplinkCharges: SATELLITE_MAX_CHARGES,
+  lastUplinkRefillTime: Date.now(),
 
   setUserLocation: (location) => set({ userLocation: location }),
+  setSatelliteCameraLocation: (location) => set({ satelliteCameraLocation: location }),
+  triggerMapFlyTo: (location) => set({ flyToTarget: location }),
   setOtherPlayers: (players) => set({ otherPlayers: players }),
   setGlobalDrops: (drops) => {
     if (typeof drops === "function") {
@@ -123,5 +142,47 @@ export const createMapSlice: StateCreator<GameState, [], [], MapSlice> = (set, g
   isDropInRange: (origin, drop, radiusMeters = 50) => {
     const km = calculateDistance(origin, drop.location);
     return km <= metersToKilometers(radiusMeters);
+  },
+
+  toggleSatelliteMode: () => {
+    const isEnabling = !get().satelliteMode;
+    set((state) => ({ 
+      satelliteMode: isEnabling,
+      satelliteCameraLocation: isEnabling ? state.userLocation : null
+    }));
+    debounceSync(get().syncToCloud);
+  },
+
+  consumeUplinkCharge: () => {
+    const state = get();
+    // Subscribers have infinite charges
+    const isSubscriber = state.activeSubscriptions.length > 0;
+    if (isSubscriber) return true;
+
+    if (state.uplinkCharges > 0) {
+      set((state) => ({ uplinkCharges: state.uplinkCharges - 1 }));
+      debounceSync(get().syncToCloud);
+      return true;
+    }
+    return false;
+  },
+
+  refillUplinkCharges: () => {
+    const state = get();
+    const now = Date.now();
+    const elapsed = now - state.lastUplinkRefillTime;
+    
+    if (elapsed >= SATELLITE_UPLINK_REFILL_MS) {
+      const chargesToAdd = Math.floor(elapsed / SATELLITE_UPLINK_REFILL_MS);
+      const newCharges = Math.min(SATELLITE_MAX_CHARGES, state.uplinkCharges + chargesToAdd);
+      
+      if (newCharges > state.uplinkCharges) {
+        set({ 
+          uplinkCharges: newCharges,
+          lastUplinkRefillTime: now - (elapsed % SATELLITE_UPLINK_REFILL_MS)
+        });
+        debounceSync(get().syncToCloud);
+      }
+    }
   },
 });
