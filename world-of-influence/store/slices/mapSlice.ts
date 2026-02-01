@@ -13,7 +13,9 @@ import {
   RESERVE_DROP_COUNT,
   RESERVE_DROP_RADIUS_METERS,
   SATELLITE_MAX_CHARGES,
-  SATELLITE_UPLINK_REFILL_MS
+  SATELLITE_UPLINK_REFILL_MS,
+  DRONE_TETHER_RADIUS_KM,
+  DRONE_SESSION_DURATION_SEC
 } from "../types";
 import { GridBounds } from "@/lib/gridSystem";
 import { metersToKilometers, debounceSync } from "../utils";
@@ -32,6 +34,14 @@ export interface MapSlice {
   minMapZoom: number;
   maxMapZoom: number;
   satelliteMode: boolean;
+  viewingMode: "personal" | "drone";
+  droneStatus: "idle" | "targeting" | "deploying" | "active";
+  droneTargetLocation: LatLng | null;
+  droneCurrentLocation: LatLng | null;
+  droneSessionExpiry: number | null;
+  isLeaping: boolean;
+  droneTimer: number;
+  droneTetherCenter: LatLng | null;
   satelliteCameraLocation: LatLng | null;
   flyToTarget: LatLng | null;
   uplinkCharges: number;
@@ -45,11 +55,21 @@ export interface MapSlice {
   setMapZoomLimits: (minZoom: number, maxZoom: number) => void;
   setPickupRadiusMultiplier: (multiplier: number) => void;
   setSelectedParcel: (parcel: GridBounds | null) => void;
+  setViewingMode: (mode: "personal" | "drone") => void;
   generateDrops: (origin: LatLng) => void;
   spawnDropsInRadius: (origin: LatLng, count: number, radiusMeters: number) => void;
   collectDrop: (dropId: string) => { type: RewardType; amount: number };
   isDropInRange: (origin: LatLng, drop: { location: LatLng }, radiusMeters?: number) => boolean;
   toggleSatelliteMode: () => void;
+  startTargeting: () => void;
+  confirmDeployment: (target: LatLng) => void;
+  completeDeployment: () => void;
+  cancelDrone: () => void;
+  setLeaping: (leaping: boolean) => void;
+  updateDroneLocation: (location: LatLng) => void;
+  startDroneSession: () => void;
+  endDroneSession: () => void;
+  updateDroneTimer: () => void;
   consumeUplinkCharge: () => boolean;
   refillUplinkCharges: () => void;
 }
@@ -67,13 +87,31 @@ export const createMapSlice: StateCreator<GameState, [], [], MapSlice> = (set, g
   minMapZoom: 17,
   maxMapZoom: 21,
   satelliteMode: false,
+  viewingMode: "personal",
+  droneStatus: "idle",
+  droneTargetLocation: null,
+  droneCurrentLocation: null,
+  droneSessionExpiry: null,
+  isLeaping: false,
+  droneTimer: 0,
+  droneTetherCenter: null,
   satelliteCameraLocation: null,
   flyToTarget: null,
   uplinkCharges: SATELLITE_MAX_CHARGES,
   lastUplinkRefillTime: Date.now(),
 
   setUserLocation: (location) => set({ userLocation: location }),
-  setSatelliteCameraLocation: (location) => set({ satelliteCameraLocation: location }),
+  setSatelliteCameraLocation: (location) => {
+    const state = get();
+    if (location && state.droneStatus === "active" && state.droneTetherCenter) {
+      const dist = calculateDistance(state.droneTetherCenter, location);
+      if (dist > DRONE_TETHER_RADIUS_KM) {
+        // Enforce 10-mile tether limit
+        return;
+      }
+    }
+    set({ satelliteCameraLocation: location });
+  },
   triggerMapFlyTo: (location) => set({ flyToTarget: location }),
   setOtherPlayers: (players) => set({ otherPlayers: players }),
   setGlobalDrops: (drops) => {
@@ -94,6 +132,7 @@ export const createMapSlice: StateCreator<GameState, [], [], MapSlice> = (set, g
   setPickupRadiusMultiplier: (multiplier) =>
     set({ pickupRadiusMultiplier: Math.max(1, multiplier) }),
   setSelectedParcel: (parcel) => set({ selectedParcel: parcel }),
+  setViewingMode: (mode) => set({ viewingMode: mode }),
 
   generateDrops: (origin) => {
     const now = Date.now();
@@ -145,12 +184,122 @@ export const createMapSlice: StateCreator<GameState, [], [], MapSlice> = (set, g
   },
 
   toggleSatelliteMode: () => {
-    const isEnabling = !get().satelliteMode;
-    set((state) => ({ 
-      satelliteMode: isEnabling,
-      satelliteCameraLocation: isEnabling ? state.userLocation : null
-    }));
+    const state = get();
+    if (state.satelliteMode) {
+      state.cancelDrone();
+    } else {
+      state.startTargeting();
+    }
+  },
+
+  startTargeting: () => {
+    const state = get();
+    if (!state.userLocation) return;
+    
+    set({ 
+      satelliteMode: true,
+      viewingMode: "drone",
+      droneStatus: "targeting",
+      satelliteCameraLocation: state.userLocation,
+      minMapZoom: 14, // Allow zooming out further for targeting
+      mapZoom: 14, // Zoom out for targeting overview
+    });
+    
+    // Trigger zoom 14 flyTo when starting targeting
+    state.triggerMapFlyTo(state.userLocation);
     debounceSync(get().syncToCloud);
+  },
+
+  confirmDeployment: (target: LatLng) => {
+    const state = get();
+    if (!state.userLocation) return;
+
+    const dist = calculateDistance(state.userLocation, target);
+    if (dist > DRONE_TETHER_RADIUS_KM) {
+      // 10 mile (16km) tether limit check
+      return;
+    }
+
+    set({ 
+      droneStatus: "deploying",
+      droneTargetLocation: target,
+      droneCurrentLocation: state.userLocation,
+      isLeaping: true,
+      viewingMode: "drone",
+      selectedParcel: null // Clear selection on deployment
+    });
+    
+    state.triggerMapFlyTo(target);
+    debounceSync(get().syncToCloud);
+  },
+
+  completeDeployment: () => {
+    const now = Date.now();
+    set({ 
+      droneStatus: "active",
+      viewingMode: "drone",
+      droneTimer: DRONE_SESSION_DURATION_SEC,
+      droneSessionExpiry: now + (DRONE_SESSION_DURATION_SEC * 1000),
+      droneTetherCenter: get().droneTargetLocation,
+      isLeaping: false,
+      minMapZoom: 17, // Restore normal zoom limits
+      mapZoom: 19 // Zoom in on landing
+    });
+    debounceSync(get().syncToCloud);
+  },
+
+  cancelDrone: () => {
+    const state = get();
+    if (state.userLocation) {
+      state.triggerMapFlyTo(state.userLocation);
+    }
+    set({ 
+      satelliteMode: false,
+      viewingMode: "personal",
+      droneStatus: "idle",
+      droneTimer: 0,
+      droneTargetLocation: null,
+      droneCurrentLocation: null,
+      droneSessionExpiry: null,
+      droneTetherCenter: null,
+      satelliteCameraLocation: null,
+      isLeaping: false,
+      minMapZoom: 17, // Restore normal zoom limits
+      mapZoom: 18,
+      selectedParcel: null // Clear selection on cancel
+    });
+    debounceSync(get().syncToCloud);
+  },
+
+  setLeaping: (leaping: boolean) => set({ isLeaping: leaping }),
+
+  updateDroneLocation: (location: LatLng) => set({ droneCurrentLocation: location }),
+
+  startDroneSession: () => {
+    // Deprecated in favor of multi-phase targeting
+    get().startTargeting();
+  },
+
+  endDroneSession: () => {
+    // Deprecated in favor of cancelDrone
+    get().cancelDrone();
+  },
+
+  updateDroneTimer: () => {
+    const state = get();
+    if (state.droneStatus !== "active") return;
+
+    const now = Date.now();
+    if (state.droneSessionExpiry && now >= state.droneSessionExpiry) {
+      state.cancelDrone();
+    } else {
+      // Keep droneTimer in sync for UI display if needed, 
+      // though expiry timestamp is more reliable.
+      const remaining = state.droneSessionExpiry 
+        ? Math.max(0, Math.floor((state.droneSessionExpiry - now) / 1000))
+        : 0;
+      set({ droneTimer: remaining });
+    }
   },
 
   consumeUplinkCharge: () => {

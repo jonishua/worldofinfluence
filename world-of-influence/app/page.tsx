@@ -16,6 +16,7 @@ import SplitLedger from "@/components/hud/SplitLedger";
 import SatelliteWidget from "@/components/hud/SatelliteWidget";
 import SatelliteOverlay from "@/components/hud/SatelliteOverlay";
 import SatelliteSearchBar from "@/components/hud/SatelliteSearchBar";
+import DeploymentSlider from "@/components/hud/DeploymentSlider";
 import { useGovernanceStore } from "@/store/useGameStore";
 import { AnimatePresence } from "framer-motion";
 
@@ -32,6 +33,7 @@ export default function Home() {
         <GameMapClient />
         <SatelliteOverlay />
         <SatelliteSearchBar />
+        <DeploymentSlider />
         <SplitLedger 
           onOpenProfile={() => setIsProfileOpen(true)}
           isProfileOpen={isProfileOpen}

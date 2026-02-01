@@ -8,10 +8,15 @@ import {
   useEconomyStore, 
   useMapStore, 
   usePropertyStore,
-  REMOTE_FILING_FEE_MULTIPLIER
+  useGameStore,
+  REMOTE_FILING_FEE_MULTIPLIER,
+  DRONE_BUY_RADIUS_KM,
+  calculateDistance,
+  metersToKilometers
 } from "@/store/useGameStore";
 
 const PURCHASE_COST = 100;
+const BASE_INTERACTION_RADIUS_METERS = 50;
 
 const mintingSteps = [
   "Verifying GPS Coordinates...",
@@ -59,6 +64,8 @@ type Phase = "buy" | "minting" | "reveal";
 export default function PurchaseModal() {
   const selectedParcel = useMapStore((state) => state.selectedParcel);
   const satelliteMode = useMapStore((state) => state.satelliteMode);
+  const viewingMode = useMapStore((state) => state.viewingMode);
+  const droneStatus = useMapStore((state) => state.droneStatus);
   const ownedParcels = usePropertyStore((state) => state.ownedParcels);
   const influenceBucks = useEconomyStore((state) => state.influenceBucks);
   const activeSubscriptions = useEconomyStore((state) => state.activeSubscriptions);
@@ -76,7 +83,8 @@ export default function PurchaseModal() {
   const confettiRainIntervalRef = useRef<number | null>(null);
 
   const isSubscriber = activeSubscriptions.length > 0;
-  const applyRemoteFee = satelliteMode && !isSubscriber;
+  const isDroneView = satelliteMode && droneStatus === "active" && viewingMode === "drone";
+  const applyRemoteFee = isDroneView && !isSubscriber;
   const remoteFee = applyRemoteFee ? Math.ceil(PURCHASE_COST * REMOTE_FILING_FEE_MULTIPLIER) : 0;
   const totalCost = PURCHASE_COST + remoteFee;
 
@@ -116,6 +124,32 @@ export default function PurchaseModal() {
     if (!selectedParcel || isOwned) {
       return;
     }
+
+    const pickupRadiusMultiplier = useGameStore.getState().pickupRadiusMultiplier;
+    const interactionRadiusKm = metersToKilometers(BASE_INTERACTION_RADIUS_METERS * pickupRadiusMultiplier);
+    
+    // Determine the origin for distance check
+    const userLocation = useGameStore.getState().userLocation;
+    const droneTetherCenter = useGameStore.getState().droneTetherCenter;
+    const droneStatus = useGameStore.getState().droneStatus;
+    const viewingMode = useGameStore.getState().viewingMode;
+    
+    const isDroneView = satelliteMode && droneStatus === "active" && viewingMode === "drone";
+    const origin = isDroneView ? droneTetherCenter : userLocation;
+
+    if (!origin) {
+      setError("Location services unavailable.");
+      return;
+    }
+
+    const dist = calculateDistance(origin, selectedParcel.center);
+    const maxRadius = isDroneView ? DRONE_BUY_RADIUS_KM : interactionRadiusKm;
+
+    if (dist > maxRadius) {
+      setError(isDroneView ? "Out of drone scouting range (0.5mi)." : "Target out of physical range.");
+      return;
+    }
+
     if (influenceBucks < totalCost) {
       setError("Insufficient Influence Bucks.");
       return;
@@ -206,7 +240,7 @@ export default function PurchaseModal() {
     };
   }, []);
 
-  if (!selectedParcel || isOwned) {
+  if (!selectedParcel || isOwned || droneStatus === "targeting" || droneStatus === "deploying") {
     return null;
   }
 
@@ -229,7 +263,7 @@ export default function PurchaseModal() {
           >
             <div className="text-4xl">📍</div>
             <p className="mt-3 text-2xl font-extrabold text-[var(--text-primary)]">
-              {satelliteMode ? "Remote Acquisition" : "Acquire Parcel?"}
+              {isDroneView ? "Remote Acquisition" : "Acquire Parcel?"}
             </p>
             <div className="mt-4 space-y-2 rounded-xl bg-slate-50 p-4 dark:bg-slate-900/50">
               <div className="flex justify-between text-sm">
@@ -237,7 +271,7 @@ export default function PurchaseModal() {
                 <span className="font-mono font-bold">{PURCHASE_COST} IB</span>
               </div>
               
-              {satelliteMode && (
+              {isDroneView && (
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500">Remote Filing Fee</span>
                   <span className={`font-mono font-bold ${isSubscriber ? 'text-[#00C805]' : 'text-rose-500'}`}>
@@ -246,7 +280,7 @@ export default function PurchaseModal() {
                 </div>
               )}
 
-              {satelliteMode && isSubscriber && (
+              {isDroneView && isSubscriber && (
                 <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-[#00C805]">
                   <span>Explorer Pass Discount</span>
                   <span>-100% Fee</span>

@@ -280,6 +280,8 @@ export const REGION_HIERARCHY: Record<string, { state: string; country: string }
   "Austin, TX": { state: "Texas", country: "United States" },
 };
 
+export type DroneStatus = "idle" | "targeting" | "deploying" | "active";
+
 export type GameState = {
   userLocation: LatLng | null;
   rentBalance: number;
@@ -321,7 +323,18 @@ export type GameState = {
   activeSubscriptions: string[];
   isTickerVisible: boolean;
   selectedJurisdiction: string | null;
+  viewingMode: "personal" | "drone";
+  
+  // Drone System
   satelliteMode: boolean;
+  droneStatus: DroneStatus;
+  droneTargetLocation: LatLng | null;
+  droneCurrentLocation: LatLng | null;
+  droneSessionExpiry: number | null;
+  isLeaping: boolean;
+  
+  droneTimer: number;
+  droneTetherCenter: LatLng | null;
   satelliteCameraLocation: LatLng | null;
   flyToTarget: LatLng | null;
   uplinkCharges: number;
@@ -344,6 +357,7 @@ export type GameState = {
   collectDrop: (dropId: string) => { type: RewardType; amount: number };
   isDropInRange: (origin: LatLng, drop: { location: LatLng }, radiusMeters?: number) => boolean;
   setSelectedParcel: (parcel: GridBounds | null) => void;
+  setViewingMode: (mode: "personal" | "drone") => void;
   setIsMinting: (isMinting: boolean) => void;
   setForceNextLegendary: (force: boolean) => void;
   setOwnedParcelsCount: (count: number) => void;
@@ -362,7 +376,19 @@ export type GameState = {
   setActiveLeaderboardScope: (scope: LeaderboardTab) => void;
   setTickerVisible: (visible: boolean) => void;
   setSelectedJurisdiction: (region: string | null) => void;
+  
+  // Drone Actions
   toggleSatelliteMode: () => void;
+  startTargeting: () => void;
+  confirmDeployment: (target: LatLng) => void;
+  completeDeployment: () => void;
+  cancelDrone: () => void;
+  setLeaping: (leaping: boolean) => void;
+  updateDroneLocation: (location: LatLng) => void;
+
+  startDroneSession: () => void;
+  endDroneSession: () => void;
+  updateDroneTimer: () => void;
   consumeUplinkCharge: () => boolean;
   refillUplinkCharges: () => void;
   watchSponsorBriefing: () => { success: boolean; remainingCooldown?: number };
@@ -422,5 +448,9 @@ export const RESERVE_DROP_COUNT = 20;
 export const SATELLITE_UPLINK_REFILL_MS = 60 * 60 * 1000;
 export const SATELLITE_MAX_CHARGES = 3;
 export const REMOTE_FILING_FEE_MULTIPLIER = 0.1;
+export const DRONE_TETHER_RADIUS_MILES = 10;
+export const DRONE_TETHER_RADIUS_KM = 16.0934;
+export const DRONE_BUY_RADIUS_KM = 0.804672;
+export const DRONE_SESSION_DURATION_SEC = 600; // 10 minutes
 export const getBoostStackLimitMs = () => 6 * 60 * 60 * 1000;
 export const getEscrowLimitMs = () => 4 * 60 * 60 * 1000;

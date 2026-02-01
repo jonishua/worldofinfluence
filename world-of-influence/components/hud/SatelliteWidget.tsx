@@ -1,16 +1,30 @@
 "use client";
 
-import { SatelliteDish, Navigation } from "lucide-react";
+import { Navigation, User, Drone } from "lucide-react";
 import { useMapStore } from "@/store/useGameStore";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function SatelliteWidget() {
   const satelliteMode = useMapStore((state) => state.satelliteMode);
+  const viewingMode = useMapStore((state) => state.viewingMode);
+  const droneStatus = useMapStore((state) => state.droneStatus);
+  const userLocation = useMapStore((state) => state.userLocation);
+  const droneTetherCenter = useMapStore((state) => state.droneTetherCenter);
   const toggleSatelliteMode = useMapStore((state) => state.toggleSatelliteMode);
+  const triggerMapFlyTo = useMapStore((state) => state.triggerMapFlyTo);
+  const setSatelliteCameraLocation = useMapStore((state) => state.setSatelliteCameraLocation);
+  const setViewingMode = useMapStore((state) => state.setViewingMode);
   
-  // For now, we'll just have a placeholder for recenter logic 
-  // since the map component handles its own auto-centering.
-  // In a real scenario, this would trigger the map to fly back to user.
+  const handleViewToggle = (view: "personal" | "drone") => {
+    setViewingMode(view);
+    if (view === "personal" && userLocation) {
+      triggerMapFlyTo(userLocation);
+      setSatelliteCameraLocation(userLocation);
+    } else if (view === "drone" && droneTetherCenter) {
+      triggerMapFlyTo(droneTetherCenter);
+      setSatelliteCameraLocation(droneTetherCenter);
+    }
+  };
 
   return (
     <div className="absolute bottom-32 right-6 z-[500] flex flex-col gap-3">
@@ -20,26 +34,44 @@ export default function SatelliteWidget() {
         onClick={toggleSatelliteMode}
         className={`flex h-14 w-14 items-center justify-center rounded-[16px] shadow-xl transition-all duration-300 ${
           satelliteMode 
-            ? "bg-[#F59E0B] text-white shadow-[0_0_20px_rgba(245,158,11,0.5)] border-none" 
+            ? "bg-cyan-500 text-slate-950 shadow-[0_0_20px_rgba(6,182,212,0.5)] border-none" 
             : "bg-white/90 dark:bg-slate-800/90 backdrop-blur-md text-slate-800 dark:text-slate-100 border border-white/20 dark:border-slate-700/50"
         }`}
       >
-        <SatelliteDish className={`h-6 w-6 ${satelliteMode ? "animate-pulse" : ""}`} />
+        <Drone className={`h-6 w-6 ${satelliteMode ? "animate-pulse" : ""}`} />
       </motion.button>
 
       <AnimatePresence>
-        {satelliteMode && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.8, y: 10 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={toggleSatelliteMode} // Toggling off returns to GPS
-            className="flex h-12 w-12 items-center justify-center rounded-[14px] bg-white/90 dark:bg-slate-800/90 backdrop-blur-md text-slate-800 dark:text-slate-100 border border-white/20 dark:border-slate-700/50 shadow-lg"
+        {satelliteMode && droneStatus === "active" && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            className="flex flex-col gap-2"
           >
-            <Navigation className="h-5 w-5" />
-          </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleViewToggle("drone")}
+              className={`flex h-12 w-12 items-center justify-center rounded-[14px] backdrop-blur-md border shadow-lg transition-colors ${
+                viewingMode === "drone" ? "bg-cyan-500 text-slate-950 border-cyan-400" : "bg-cyan-500/20 text-cyan-400 border-cyan-500/30"
+              }`}
+              title="View Drone"
+            >
+              <Drone className="h-5 w-5" />
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleViewToggle("personal")}
+              className={`flex h-12 w-12 items-center justify-center rounded-[14px] backdrop-blur-md border shadow-lg transition-colors ${
+                viewingMode === "personal" ? "bg-slate-700 text-white border-white/40" : "bg-slate-800/80 text-slate-300 border border-white/10"
+              }`}
+              title="View Personal"
+            >
+              <User className="h-5 w-5" />
+            </motion.button>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

@@ -9,6 +9,7 @@ const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
 export default function SatelliteSearchBar() {
   const satelliteMode = useMapStore((state) => state.satelliteMode);
+  const showSearchBar = false; // Hidden during standard Drone session
   const toggleSatelliteMode = useMapStore((state) => state.toggleSatelliteMode);
   const uplinkCharges = useMapStore((state) => state.uplinkCharges);
   const consumeUplinkCharge = useMapStore((state) => state.consumeUplinkCharge);
@@ -86,7 +87,7 @@ export default function SatelliteSearchBar() {
 
   return (
     <AnimatePresence>
-      {satelliteMode && (
+      {showSearchBar && (
         <motion.div
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}

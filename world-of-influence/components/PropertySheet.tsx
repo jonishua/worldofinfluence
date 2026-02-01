@@ -44,6 +44,7 @@ export default function PropertySheet() {
   const timeouts = useRef<number[]>([]);
 
   const parcel = selectedParcel ? ownedParcels[selectedParcel.id] : null;
+  const droneStatus = useMapStore((state) => state.droneStatus);
 
   useEffect(() => {
     if (!parcel) {
@@ -77,7 +78,7 @@ export default function PropertySheet() {
     [ownedParcels],
   );
 
-  if (!parcel) {
+  if (!parcel || droneStatus === "targeting" || droneStatus === "deploying") {
     return null;
   }
 
