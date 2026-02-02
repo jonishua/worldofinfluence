@@ -2,7 +2,6 @@
 
 import { Plus, Sparkles, Map, ShoppingBag, Wallet, Gamepad2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import ThemeSwitcher from "./ThemeSwitcher";
 import { supabase } from "@/lib/supabase";
 
 import { 
@@ -103,12 +102,12 @@ export default function BottomNav({ onOpenTerminal, onOpenShop, isTerminalOpen =
                     min={0}
                     value={inkAmount}
                     onChange={(event) => setInkAmount(Number(event.target.value))}
-                    className="w-20 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900"
+                    className="w-20 rounded-md border border-[var(--card-border)] bg-[var(--card-bg)] px-2 py-1 text-xs text-[var(--text-primary)]"
                   />
                   <button
                     type="button"
                     onClick={() => addWalletBalance(Math.max(0, inkAmount))}
-                    className="flex items-center gap-1 rounded-md bg-slate-900 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white"
+                    className="flex items-center gap-1 rounded-md bg-[var(--gray-bg)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-primary)]"
                   >
                     <Plus className="h-3 w-3" /> Add
                   </button>
@@ -120,12 +119,12 @@ export default function BottomNav({ onOpenTerminal, onOpenShop, isTerminalOpen =
                     min={0}
                     value={influenceAmount}
                     onChange={(event) => setInfluenceAmount(Number(event.target.value))}
-                    className="w-20 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900"
+                    className="w-20 rounded-md border border-[var(--card-border)] bg-[var(--card-bg)] px-2 py-1 text-xs text-[var(--text-primary)]"
                   />
                   <button
                     type="button"
                     onClick={() => addInfluenceBucks(Math.max(0, influenceAmount))}
-                    className="flex items-center gap-1 rounded-md bg-slate-900 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white"
+                    className="flex items-center gap-1 rounded-md bg-[var(--gray-bg)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-primary)]"
                   >
                     <Plus className="h-3 w-3" /> Add
                   </button>
@@ -137,12 +136,12 @@ export default function BottomNav({ onOpenTerminal, onOpenShop, isTerminalOpen =
                     min={0}
                     value={creditAmount}
                     onChange={(event) => setCreditAmount(Number(event.target.value))}
-                    className="w-20 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900"
+                    className="w-20 rounded-md border border-[var(--card-border)] bg-[var(--card-bg)] px-2 py-1 text-xs text-[var(--text-primary)]"
                   />
                   <button
                     type="button"
                     onClick={() => addCredits(Math.max(0, creditAmount))}
-                    className="flex items-center gap-1 rounded-md bg-slate-900 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white"
+                    className="flex items-center gap-1 rounded-md bg-[var(--gray-bg)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-primary)]"
                   >
                     <Plus className="h-3 w-3" /> Add
                   </button>
@@ -154,12 +153,12 @@ export default function BottomNav({ onOpenTerminal, onOpenShop, isTerminalOpen =
                     min={0}
                     value={permitAmount}
                     onChange={(event) => setPermitAmount(Number(event.target.value))}
-                    className="w-20 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900"
+                    className="w-20 rounded-md border border-[var(--card-border)] bg-[var(--card-bg)] px-2 py-1 text-xs text-[var(--text-primary)]"
                   />
                   <button
                     type="button"
                     onClick={() => addZoningPermits(Math.max(0, permitAmount))}
-                    className="flex items-center gap-1 rounded-md bg-slate-900 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white"
+                    className="flex items-center gap-1 rounded-md bg-[var(--gray-bg)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-primary)]"
                   >
                     <Plus className="h-3 w-3" /> Add
                   </button>
@@ -171,12 +170,12 @@ export default function BottomNav({ onOpenTerminal, onOpenShop, isTerminalOpen =
                     min={0}
                     value={ownedParcelCount}
                     onChange={(event) => setOwnedParcelCount(Number(event.target.value))}
-                    className="w-20 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900"
+                    className="w-20 rounded-md border border-[var(--card-border)] bg-[var(--card-bg)] px-2 py-1 text-xs text-[var(--text-primary)]"
                   />
                   <button
                     type="button"
                     onClick={() => setOwnedParcelsCount(ownedParcelCount)}
-                    className="flex items-center gap-1 rounded-md bg-slate-900 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white"
+                    className="flex items-center gap-1 rounded-md bg-[var(--gray-bg)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-primary)]"
                   >
                     <Plus className="h-3 w-3" /> Set
                   </button>
@@ -187,14 +186,14 @@ export default function BottomNav({ onOpenTerminal, onOpenShop, isTerminalOpen =
                     <button
                       type="button"
                       onClick={() => setPickupRadiusMultiplier(2)}
-                      className="rounded-md bg-slate-900 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white"
+                      className="rounded-md bg-[var(--gray-bg)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-primary)]"
                     >
                       2x
                     </button>
                     <button
                       type="button"
                       onClick={() => setPickupRadiusMultiplier(5)}
-                      className="rounded-md bg-slate-900 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white"
+                      className="rounded-md bg-[var(--gray-bg)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-primary)]"
                     >
                       5x
                     </button>
@@ -210,20 +209,20 @@ export default function BottomNav({ onOpenTerminal, onOpenShop, isTerminalOpen =
                       }
                       spawnDropsInRadius(userLocation, 3, pickupRadius);
                     }}
-                    className="rounded-md bg-slate-900 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white"
+                    className="rounded-md bg-[var(--gray-bg)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-primary)]"
                   >
                     Spawn 3
                   </button>
                   <button
                     type="button"
                     onClick={handleSpawnGlobalDrop}
-                    className="rounded-md bg-[#00C805] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white shadow-[0_0_10px_rgba(0,200,5,0.4)]"
+                    className="rounded-md bg-[var(--accent-color)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white shadow-[0_0_10px_rgba(0,200,5,0.4)]"
                   >
                     Spawn Global
                   </button>
                 </div>
-                <div className="mt-2 space-y-2 rounded-[calc(var(--radius)_-_4px)] border border-slate-200/80 bg-white/90 p-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                <div className="mt-2 space-y-2 rounded-[calc(var(--radius)_-_4px)] border border-[var(--card-border)] bg-[var(--card-bg)]/90 p-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
                     Governance
                   </p>
                   <div className="flex items-center justify-between gap-2">
@@ -232,7 +231,7 @@ export default function BottomNav({ onOpenTerminal, onOpenShop, isTerminalOpen =
                       type="text"
                       value={governanceRegion}
                       onChange={(event) => setGovernanceRegion(event.target.value)}
-                      className="w-32 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900"
+                      className="w-32 rounded-md border border-[var(--card-border)] bg-[var(--card-bg)] px-2 py-1 text-xs text-[var(--text-primary)]"
                     />
                   </div>
                   <div className="flex items-center justify-between gap-2">
@@ -242,7 +241,7 @@ export default function BottomNav({ onOpenTerminal, onOpenShop, isTerminalOpen =
                       min={0}
                       value={cityKeyCost}
                       onChange={(event) => setCityKeyCost(Number(event.target.value))}
-                      className="w-20 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900"
+                      className="w-20 rounded-md border border-[var(--card-border)] bg-[var(--card-bg)] px-2 py-1 text-xs text-[var(--text-primary)]"
                     />
                     <button
                       type="button"
@@ -253,7 +252,7 @@ export default function BottomNav({ onOpenTerminal, onOpenShop, isTerminalOpen =
                           "city",
                         )
                       }
-                      className="rounded-md bg-slate-900 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white"
+                      className="rounded-md bg-[var(--gray-bg)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-primary)]"
                     >
                       Buy Key
                     </button>
@@ -265,7 +264,7 @@ export default function BottomNav({ onOpenTerminal, onOpenShop, isTerminalOpen =
                       min={0}
                       value={treasuryAmount}
                       onChange={(event) => setTreasuryAmount(Number(event.target.value))}
-                      className="w-20 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900"
+                      className="w-20 rounded-md border border-[var(--card-border)] bg-[var(--card-bg)] px-2 py-1 text-xs text-[var(--text-primary)]"
                     />
                     <button
                       type="button"
@@ -275,7 +274,7 @@ export default function BottomNav({ onOpenTerminal, onOpenShop, isTerminalOpen =
                           Math.max(0, treasuryAmount),
                         )
                       }
-                      className="rounded-md bg-slate-900 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white"
+                      className="rounded-md bg-[var(--gray-bg)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-primary)]"
                     >
                       Add
                     </button>
@@ -285,20 +284,19 @@ export default function BottomNav({ onOpenTerminal, onOpenShop, isTerminalOpen =
                     <button
                       type="button"
                       onClick={() => distributeTreasuryPayout(governanceRegion)}
-                      className="rounded-md bg-slate-900 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white"
+                      className="rounded-md bg-[var(--gray-bg)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-primary)]"
                     >
                       Distribute
                     </button>
                   </div>
                 </div>
-                <ThemeSwitcher variant="inline" />
-                <div className="mt-2 space-y-2 rounded-[calc(var(--radius)_-_4px)] border border-slate-200/80 bg-white/90 p-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                <div className="mt-2 space-y-2 rounded-[calc(var(--radius)_-_4px)] border border-[var(--card-border)] bg-[var(--card-bg)]/90 p-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
                     Zoom Limits
                   </p>
-                  <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
                     <span>Zoom</span>
-                    <span className="font-mono text-slate-700">{mapZoom.toFixed(1)}x</span>
+                    <span className="font-mono text-[var(--text-primary)]">{mapZoom.toFixed(1)}x</span>
                   </div>
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-semibold">Out</span>
@@ -307,7 +305,7 @@ export default function BottomNav({ onOpenTerminal, onOpenShop, isTerminalOpen =
                       min={0}
                       value={minZoomInput}
                       onChange={(event) => setMinZoomInput(Number(event.target.value))}
-                      className="w-20 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900"
+                      className="w-20 rounded-md border border-[var(--card-border)] bg-[var(--card-bg)] px-2 py-1 text-xs text-[var(--text-primary)]"
                     />
                     <span className="font-semibold">In</span>
                     <input
@@ -315,26 +313,26 @@ export default function BottomNav({ onOpenTerminal, onOpenShop, isTerminalOpen =
                       min={0}
                       value={maxZoomInput}
                       onChange={(event) => setMaxZoomInput(Number(event.target.value))}
-                      className="w-20 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900"
+                      className="w-20 rounded-md border border-[var(--card-border)] bg-[var(--card-bg)] px-2 py-1 text-xs text-[var(--text-primary)]"
                     />
                   </div>
                   <button
                     type="button"
                     onClick={() => setMapZoomLimits(minZoomInput, maxZoomInput)}
-                    className="w-full rounded-md bg-slate-900 px-2 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-white"
+                    className="w-full rounded-md bg-[var(--gray-bg)] px-2 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-primary)]"
                   >
                     Save Zoom
                   </button>
                 </div>
-                <div className="mt-2 space-y-2 rounded-[calc(var(--radius)_-_4px)] border border-slate-200/80 bg-white/90 p-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                <div className="mt-2 space-y-2 rounded-[calc(var(--radius)_-_4px)] border border-[var(--card-border)] bg-[var(--card-bg)]/90 p-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
                     Minting Cheats
                   </p>
-                  <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
                     <span>Status</span>
                     <span
                       className={`font-mono ${
-                        forceNextLegendary ? "text-amber-600" : "text-slate-500"
+                        forceNextLegendary ? "text-amber-600" : "text-[var(--text-muted)]"
                       }`}
                     >
                       {forceNextLegendary ? "Armed" : "Off"}
@@ -343,13 +341,13 @@ export default function BottomNav({ onOpenTerminal, onOpenShop, isTerminalOpen =
                   <button
                     type="button"
                     onClick={() => setForceNextLegendary(!forceNextLegendary)}
-                    className="w-full rounded-md bg-slate-900 px-2 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-white"
+                    className="w-full rounded-md bg-[var(--gray-bg)] px-2 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-primary)]"
                   >
                     {forceNextLegendary ? "Disable Legendary" : "Force Next Legendary"}
                   </button>
                 </div>
-                <div className="mt-2 space-y-2 rounded-[calc(var(--radius)_-_4px)] border border-slate-200/80 bg-white/90 p-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                <div className="mt-2 space-y-2 rounded-[calc(var(--radius)_-_4px)] border border-[var(--card-border)] bg-[var(--card-bg)]/90 p-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
                     Boost Timer
                   </p>
                   <div className="flex items-center justify-between gap-2">
@@ -361,22 +359,22 @@ export default function BottomNav({ onOpenTerminal, onOpenShop, isTerminalOpen =
                       onChange={(event) =>
                         setBoostDurationSeconds(Number(event.target.value))
                       }
-                      className="w-24 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900"
+                      className="w-24 rounded-md border border-[var(--card-border)] bg-[var(--card-bg)] px-2 py-1 text-xs text-[var(--text-primary)]"
                     />
                     <button
                       type="button"
                       onClick={() =>
                         setBoostDurationMs(Math.max(1, boostDurationSeconds) * 1000)
                       }
-                      className="rounded-md bg-slate-900 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white"
+                      className="rounded-md bg-[var(--gray-bg)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-primary)]"
                     >
                       Save
                     </button>
                   </div>
                 </div>
-                <div className="mt-2 flex items-center justify-between rounded-[calc(var(--radius)_-_4px)] border border-slate-200/80 bg-white/90 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                <div className="mt-2 flex items-center justify-between rounded-[calc(var(--radius)_-_4px)] border border-[var(--card-border)] bg-[var(--card-bg)]/90 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
                   <span>Compass</span>
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 bg-slate-950 text-[11px] font-semibold text-white">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-[var(--card-border)] bg-[var(--gray-bg)] text-[11px] font-semibold text-[var(--text-primary)]">
                     N
                   </span>
                 </div>
@@ -408,7 +406,7 @@ export default function BottomNav({ onOpenTerminal, onOpenShop, isTerminalOpen =
             <button
               type="button"
               onClick={() => setIsCheatOpen(false)}
-              className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full border border-[var(--card-border)] bg-slate-950 text-lg font-semibold text-white shadow-[0_12px_30px_rgba(15,23,42,0.3)]"
+              className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full border border-[var(--card-border)] bg-[var(--gray-bg)] text-lg font-semibold text-[var(--text-primary)] shadow-[0_12px_30px_rgba(15,23,42,0.3)]"
               aria-label="Close cheat menu"
             >
               ×
@@ -417,7 +415,7 @@ export default function BottomNav({ onOpenTerminal, onOpenShop, isTerminalOpen =
         </div>
       )}
       <div className="pointer-events-none absolute bottom-6 left-1/2 z-50 -translate-x-1/2">
-        <div className="relative pointer-events-auto flex items-center gap-6 rounded-[var(--radius)] border border-[var(--card-border)] bg-[var(--card-bg)]/90 px-6 py-3 shadow-[0_12px_30px_rgba(15,23,42,0.12)] backdrop-blur">
+        <div className="relative pointer-events-auto flex items-center gap-6 rounded-[var(--radius)] border border-[var(--card-border)] bg-[var(--card-bg)]/90 px-6 py-3 shadow-[0_12px_30px_rgba(15,23,42,0.12)] backdrop-blur-xl">
         <button
           type="button"
           onClick={() => onOpenShop?.()}
@@ -446,7 +444,7 @@ export default function BottomNav({ onOpenTerminal, onOpenShop, isTerminalOpen =
         <button
           type="button"
           onClick={() => setIsCheatOpen((open) => !open)}
-          className="absolute -right-3 -top-3 flex h-8 w-8 items-center justify-center rounded-full border border-[var(--card-border)] bg-slate-950 text-white shadow-[0_8px_18px_rgba(15,23,42,0.35)]"
+          className="absolute -right-3 -top-3 flex h-8 w-8 items-center justify-center rounded-full border border-[var(--card-border)] bg-[var(--gray-bg)] text-[var(--text-primary)] shadow-[0_8px_18px_rgba(15,23,42,0.35)]"
           aria-label="Open cheat menu"
         >
           <Sparkles className="h-4 w-4 text-[var(--accent-color)]" />

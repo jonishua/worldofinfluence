@@ -38,7 +38,7 @@ const SYMBOL_CONFIG: Record<
   },
   COIN: {
     icon: Circle,
-    color: "text-slate-400",
+    color: "text-[var(--text-muted)]",
   },
 };
 

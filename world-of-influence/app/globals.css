@@ -11,6 +11,13 @@
   --accent-color: #00c805;
   --radius: 8px;
   --card-border: rgba(15, 23, 42, 0.12);
+
+  /* Gray Mode Variables (The Medium) */
+  --gray-bg: #475569; /* Slate 600 */
+  --gray-surface: #64748b; /* Slate 500 */
+  --gray-border: rgba(255, 255, 255, 0.15);
+  --gray-text: #f8fafc; /* Slate 50 */
+  --gray-text-muted: #cbd5e1; /* Slate 300 */
 }
 
 @theme inline {
@@ -21,13 +28,13 @@
   --color-vault-white: #f9fafb;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-roboto-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #1f2937;
-    --foreground: #f9fafb;
-  }
+  /* Custom Colors for Prototype Themes */
+  --color-gray-bg: var(--gray-bg);
+  --color-gray-surface: var(--gray-surface);
+  --color-gray-border: var(--gray-border);
+  --color-gray-text: var(--gray-text);
+  --color-gray-text-muted: var(--gray-text-muted);
 }
 
 body {
@@ -41,8 +48,33 @@ body {
   width: 100%;
 }
 
+/* Restore proper Leaflet pane stacking order so markers render above overlays */
 .leaflet-pane {
-  z-index: 0;
+  z-index: 400;
+}
+
+.leaflet-tile-pane {
+  z-index: 200;
+}
+
+.leaflet-overlay-pane {
+  z-index: 400;
+}
+
+.leaflet-shadow-pane {
+  z-index: 500;
+}
+
+.leaflet-marker-pane {
+  z-index: 600;
+}
+
+.leaflet-tooltip-pane {
+  z-index: 650;
+}
+
+.leaflet-popup-pane {
+  z-index: 700;
 }
 
 .leaflet-control,
@@ -388,7 +420,7 @@ body {
 }
 
 .boosted-card {
-  box-shadow: 0 0 15px #39ff14;
+  /* Green border only; outer glow removed for top HUD panel */
   border-color: rgba(57, 255, 20, 0.4);
 }
 

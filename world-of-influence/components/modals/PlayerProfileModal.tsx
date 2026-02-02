@@ -30,22 +30,22 @@ export default function PlayerProfileModal({ isOpen, onClose }: PlayerProfileMod
 
   return (
     <div className="fixed inset-0 z-[700] flex items-end justify-center bg-black/40 px-4 pb-0 pt-0 backdrop-blur-[2px]">
-      <div className="slide-up w-full max-w-[520px] rounded-t-[24px] bg-white px-6 py-7 text-left shadow-[0_-10px_40px_rgba(0,0,0,0.2)]">
+      <div className="slide-up w-full max-w-[520px] rounded-t-[24px] bg-[var(--card-bg)] px-6 py-7 text-left shadow-[0_-10px_40px_rgba(0,0,0,0.15)] backdrop-blur-xl">
         <div className="flex items-center justify-between">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
             Player Profile
           </p>
           <button
             type="button"
             onClick={onClose}
-            className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500"
+            className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]"
           >
             Close
           </button>
         </div>
 
-        <div className="mt-5 flex items-center gap-4 rounded-[18px] border border-slate-200/80 bg-slate-50/80 px-4 py-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-[16px] border border-white/70 bg-white shadow-sm">
+        <div className="mt-5 flex items-center gap-4 rounded-[18px] border border-[var(--card-border)]/80 bg-[var(--gray-surface)]/80 px-4 py-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-[16px] border border-[var(--card-border)] bg-[var(--card-bg)] shadow-sm">
             <img
               src={playerAvatar}
               alt={`${playerName} avatar`}
@@ -53,54 +53,54 @@ export default function PlayerProfileModal({ isOpen, onClose }: PlayerProfileMod
             />
           </div>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
               {playerTitle}
             </p>
-            <p className="text-base font-semibold text-slate-900">{playerName}</p>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+            <p className="text-base font-semibold text-[var(--text-primary)]">{playerName}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
               {playerRegion}
             </p>
           </div>
         </div>
 
-        <div className="mt-4 grid gap-3 rounded-[18px] border border-slate-200/80 bg-white px-4 py-4 text-xs text-slate-600">
+        <div className="mt-4 grid gap-3 rounded-[18px] border border-[var(--card-border)]/80 bg-white px-4 py-4 text-xs text-[var(--text-primary)]">
           <div className="flex items-center justify-between">
-            <span className="font-semibold uppercase tracking-[0.18em] text-slate-400">City Rank</span>
-            <span className="font-semibold text-slate-800">
+            <span className="font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">City Rank</span>
+            <span className="font-semibold text-[var(--text-primary)]">
               {playerPosition?.rank ? `#${playerPosition.rank}` : "—"}
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="font-semibold uppercase tracking-[0.18em] text-slate-400">Parcels</span>
-            <span className="font-semibold text-slate-800">
+            <span className="font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">Parcels</span>
+            <span className="font-semibold text-[var(--text-primary)]">
               {playerPosition?.entry.parcels ?? 0}
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="font-semibold uppercase tracking-[0.18em] text-slate-400">Income</span>
+            <span className="font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">Income</span>
             <span className="font-mono font-semibold text-[#00C805] tabular-nums">
               ${playerPosition?.entry.income.toFixed(6) ?? "0.000000"}/sec
             </span>
           </div>
         </div>
 
-        <div className="mt-4 rounded-[18px] border border-slate-200/80 bg-slate-50/80 px-4 py-4">
+        <div className="mt-4 rounded-[18px] border border-[var(--card-border)]/80 bg-[var(--gray-surface)]/80 px-4 py-4">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
               City Keys
             </p>
-            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
               Total {totalKeys}
             </span>
           </div>
           {sortedKeys.length === 0 ? (
-            <p className="mt-3 text-sm text-slate-500">No keys yet. Grab one to unlock status.</p>
+            <p className="mt-3 text-sm text-[var(--text-muted)]">No keys yet. Grab one to unlock status.</p>
           ) : (
             <div className="mt-3 space-y-2 text-sm text-slate-700">
               {sortedKeys.map(([region, count]) => (
                 <div
                   key={region}
-                  className="flex items-center justify-between rounded-[14px] border border-white/70 bg-white px-3 py-2"
+                  className="flex items-center justify-between rounded-[14px] border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2"
                 >
                   <span className="font-semibold">{region}</span>
                   <div className="flex items-center gap-3">
@@ -110,7 +110,7 @@ export default function PlayerProfileModal({ isOpen, onClose }: PlayerProfileMod
                     >
                       Manage
                     </button>
-                    <span className="font-mono font-semibold text-slate-900 tabular-nums">
+                    <span className="font-mono font-semibold text-[var(--text-primary)] tabular-nums">
                       ×{count}
                     </span>
                   </div>

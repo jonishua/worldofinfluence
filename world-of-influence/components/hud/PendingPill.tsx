@@ -145,11 +145,11 @@ export default function PendingPill({ onClick, className = "", minimal = false }
     >
       <div className="relative">
         {!minimal && (
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
             Pending Yield
           </p>
         )}
-        <div className={`relative mt-2 overflow-hidden rounded-full bg-slate-100/80 px-4 py-2.5 ${minimal ? "mt-0 !bg-transparent !px-0 !py-0" : ""}`}>
+        <div className={`relative mt-2 overflow-hidden rounded-full bg-[var(--gray-surface)]/80 px-4 py-2.5 ${minimal ? "mt-0 !bg-transparent !px-0 !py-0" : ""}`}>
           <div
             ref={barRef}
             className={`absolute inset-0 origin-left transition-transform duration-150 ${barClass} escrow-bar-fill ${

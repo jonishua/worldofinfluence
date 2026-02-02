@@ -1,5 +1,5 @@
 # 📋 Project Tracker: World of Influence MVP
-**Current Phase:** Phase 3 — Progression & Social
+**Current Phase:** Phase 4 — Persistence & Multiplayer
 
 ### Phase 1: The Core Loop (Walk -> Collect -> Buy)
 - [x] GDD Analysis & Ingestion
@@ -21,3 +21,30 @@
 - [x] Asset Exchange (Shop) Refactor v2.0 (Exchange, Capital, Services)
 - [x] Jurisdictional Asset Array (Horizontal Key Grid)
 - [x] Subscription Services Logic & State Persistence
+
+### Phase 4: Persistence & Multiplayer
+- [x] Backend Integration (Supabase Auth & DB) - Agent Task 04
+- [x] Store Refactor (Domain-specific stores) - [Agent Task 05](tasks/Store_Refactor_Agent_Task_05.md)
+- [x] Store Verification & Cleanup - [Agent Task 06](tasks/Store_Refactor_Verification_Agent_Task_06.md)
+- [x] CI/CD Protocol Implementation (@devops "Push it live")
+- [x] Build Stabilization & Production Readiness (Vercel Fixes)
+
+### Phase 5: Live Operations
+- [x] Live Presence & Global Events - [Agent Task 07](tasks/Live_Operations_Agent_Task_07.md)
+- [x] Real-time Multi-user Map View
+- [x] Dynamic Supply Drop Events
+- [x] Governance & Voting UI
+- [x] System Documentation & Onboarding Guide
+- [x] Tactical Drone Deployment (10-mile tether + State Machine) - [Agent Task 10](tasks/Tactical_Drone_Deployment_10.md)
+- [x] Tactical Drone Refinement & Juice (Heatmap, Audio, Micro-interactions) - [Agent Task 11](tasks/Tactical_Drone_Deployment_Refinement_11.md)
+- [x] CI/CD Protocol: Stabilized production build and pushed to live.
+- [ ] Executive Travel Feature (Global Search & Leap)
+
+### UI & Theme Consistency
+- [ ] Theme Consistency — Day / Dusk / Night + Settings - [Agent Task 14](tasks/Theme_Consistency_Day_Dusk_Night_Agent_Task_14.md)
+
+### Roadmap: Future Phases
+- [ ] Phase 6: Institutional Finance (Bank HQ, Loans, Interest)
+- [ ] Phase 7: Competitive Jurisdictions (Territory Wars)
+- [ ] Phase 8: Mobile Polish & App Store Readiness
+

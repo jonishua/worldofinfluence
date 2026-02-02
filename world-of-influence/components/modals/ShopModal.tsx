@@ -147,7 +147,7 @@ const KeyAssetCard = ({
         ) : (
           <Key className={`h-5 w-5 ${
             tier === 'MUNICIPAL' ? 'text-amber-700' : 
-            tier === 'PROVINCIAL' ? 'text-slate-500' : 'text-amber-500'
+            tier === 'PROVINCIAL' ? 'text-[var(--text-muted)]' : 'text-amber-500'
           }`} />
         )}
       </div>
@@ -155,12 +155,12 @@ const KeyAssetCard = ({
       {/* Middle: Name */}
       <div className="flex flex-col items-center text-center px-1">
         <span className={`font-black uppercase tracking-tighter leading-none ${
-          isOwned ? 'text-white' : 'text-slate-900'
+          isOwned ? 'text-white' : 'text-[var(--text-primary)]'
         } ${isLongText ? 'text-[10px]' : 'text-sm'}`}>
           {label}
         </span>
         <span className={`text-[8px] font-bold uppercase tracking-widest mt-1 ${
-          isOwned ? 'text-white/70' : 'text-slate-400'
+          isOwned ? 'text-white/70' : 'text-[var(--text-muted)]'
         }`}>
           {subLabel}
         </span>
@@ -168,7 +168,7 @@ const KeyAssetCard = ({
 
       {/* Bottom: Price/Status */}
       <div className={`w-full py-1.5 rounded-lg text-center ${
-        isOwned ? 'bg-white/20' : 'bg-slate-900'
+        isOwned ? 'bg-white/20' : 'bg-[var(--gray-bg)]'
       }`}>
         <span className={`text-[9px] font-black uppercase tracking-widest text-white`}>
           {isOwned ? 'Owned' : `${price} IB`}
@@ -272,8 +272,8 @@ const ServiceCard = ({
   const backgroundY = useTransform(scrollYProgress, [0, 1], ["-10%", "10%"]);
 
   const themeClasses = {
-    BLUEPRINT: "bg-slate-900 border-slate-800",
-    TERMINAL: "bg-slate-900 border-[#00C805]/30",
+    BLUEPRINT: "bg-[var(--gray-bg)] border-[var(--card-border)]",
+    TERMINAL: "bg-[var(--gray-bg)] border-[#00C805]/30",
     BLACK_CARD: "bg-black border-amber-500/30 shadow-[0_0_30px_rgba(245,158,11,0.1)]"
   }[tier.visualTheme];
 
@@ -335,7 +335,7 @@ const ServiceCard = ({
             <h3 className={`text-xl font-extrabold uppercase tracking-[0.2em] ${tier.visualTheme === 'BLACK_CARD' ? 'text-amber-500' : 'text-white'}`}>
               {tier.name}
             </h3>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Institutional Membership</p>
+            <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">Institutional Membership</p>
           </div>
           <div className={`text-lg font-mono font-bold ${tier.visualTheme === 'BLACK_CARD' ? 'text-amber-500' : 'text-white'}`}>
             {tier.price}
@@ -350,21 +350,21 @@ const ServiceCard = ({
                 <div className={`h-8 w-8 rounded-lg bg-white/5 flex items-center justify-center border border-white/10`}>
                   <Icon className={`h-4 w-4 ${iconColor}`} />
                 </div>
-                <span className="text-xs font-bold text-slate-200 uppercase tracking-widest">{feature}</span>
+                <span className="text-xs font-bold text-[var(--gray-text)] uppercase tracking-widest">{feature}</span>
               </div>
             );
           })}
 
           {tier.inheritedFeatures.length > 0 && (
             <div className="mt-6 pt-6 border-t border-white/5">
-              <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-4">Composite Benefits</p>
+              <p className="text-[8px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-4">Composite Benefits</p>
               <div className="space-y-3">
                 {tier.inheritedFeatures.map((feature, i) => {
                   const Icon = getIcon(feature);
                   return (
                     <div key={i} className="flex items-center gap-4 opacity-40">
                       <Icon className={`h-3.5 w-3.5 ${iconColor}`} />
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{feature}</span>
+                      <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{feature}</span>
                     </div>
                   );
                 })}
@@ -378,12 +378,12 @@ const ServiceCard = ({
           disabled={isSubscribed}
           className={`mt-10 w-full py-4 rounded-xl text-[10px] font-extrabold uppercase tracking-[0.3em] transition-all active:scale-95 disabled:opacity-50 disabled:scale-100 ${
           isSubscribed 
-            ? 'bg-slate-800 text-slate-400 border border-slate-700'
+            ? 'bg-[var(--gray-surface)] text-[var(--text-muted)] border border-[var(--card-border)]'
             : tier.visualTheme === 'BLACK_CARD' 
             ? 'bg-amber-500 text-black shadow-[0_0_20px_rgba(245,158,11,0.4)]' 
             : tier.visualTheme === 'TERMINAL'
             ? 'bg-[#00C805] text-white shadow-[0_0_20px_rgba(0,200,5,0.3)]'
-            : 'bg-white text-slate-900'
+            : 'bg-white text-[var(--text-primary)]'
         }`}>
           {isSubscribed ? 'Active License' : 'Acquire License'}
         </button>
@@ -395,15 +395,15 @@ const ServiceCard = ({
 const ProductCard = ({ product, onClick, icon: Icon = Landmark }: { product: ShopProduct; onClick: (p: ShopProduct) => void; icon?: React.ElementType }) => (
   <button
     onClick={() => onClick(product)}
-    className="group flex w-full items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 p-4 transition-all hover:border-[#00C805]/30 hover:bg-white hover:shadow-lg active:scale-[0.98]"
+    className="group flex w-full items-center justify-between rounded-2xl border border-slate-100 bg-[var(--gray-surface)] p-4 transition-all hover:border-[#00C805]/30 hover:bg-[var(--card-bg)] hover:shadow-lg active:scale-[0.98]"
   >
     <div className="flex items-center gap-4 text-left">
       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm transition-transform group-hover:scale-110">
-        <Icon className="h-6 w-6 text-slate-900" />
+        <Icon className="h-6 w-6 text-[var(--text-primary)]" />
       </div>
       <div>
         <div className="flex items-center gap-2">
-          <span className="font-mono text-sm font-bold text-slate-900 tabular-nums">
+          <span className="font-mono text-sm font-bold text-[var(--text-primary)] tabular-nums">
             {product.amount ? product.amount.toLocaleString() : ""} {product.name}
           </span>
           {product.bonus && (
@@ -412,7 +412,7 @@ const ProductCard = ({ product, onClick, icon: Icon = Landmark }: { product: Sho
             </span>
           )}
         </div>
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
           {product.label}
         </p>
       </div>
@@ -642,7 +642,7 @@ export default function ShopModal({ isOpen, onClose }: { isOpen: boolean; onClos
             exit={{ opacity: 0 }}
             onClick={handleClose}
             onWheel={(e) => e.stopPropagation()}
-            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm pointer-events-auto"
+            className="fixed inset-0 bg-[var(--gray-bg)]/40 backdrop-blur-sm pointer-events-auto"
           />
 
           {/* Toast Container */}
@@ -654,14 +654,14 @@ export default function ShopModal({ isOpen, onClose }: { isOpen: boolean; onClos
                   initial={{ y: -100, opacity: 0 }}
                   animate={{ y: 24, opacity: 1 }}
                   exit={{ y: -100, opacity: 0 }}
-                  className="flex items-center gap-3 rounded-[12px] bg-slate-900 px-6 py-3 text-white shadow-2xl border border-slate-700 pointer-events-auto mt-6"
+                  className="flex items-center gap-3 rounded-[12px] bg-[var(--card-bg)] px-6 py-3 text-[var(--text-primary)] shadow-2xl border border-[var(--card-border)] pointer-events-auto mt-6"
                 >
                   <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#00C805]">
                     <CheckCircle2 className="h-4 w-4 text-white" />
                   </div>
                   <div className="flex flex-col">
                     <span className="text-xs font-bold uppercase tracking-wider">{showToast.message}</span>
-                    <span className="text-[10px] text-slate-400">{showToast.sub}</span>
+                    <span className="text-[10px] text-[var(--text-muted)]">{showToast.sub}</span>
                   </div>
                 </motion.div>
               )}
@@ -675,20 +675,20 @@ export default function ShopModal({ isOpen, onClose }: { isOpen: boolean; onClos
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed bottom-0 left-1/2 w-full max-w-[500px] -translate-x-1/2 flex flex-col h-[85vh] overflow-hidden rounded-t-[24px] bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.2)] pointer-events-auto"
+            className="fixed bottom-0 left-1/2 w-full max-w-[500px] -translate-x-1/2 flex flex-col h-[85vh] overflow-hidden rounded-t-[24px] bg-[var(--card-bg)] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] backdrop-blur-xl pointer-events-auto"
           >
             {/* Header - Fixed */}
-            <div className="relative border-b border-slate-100 p-6 pb-4 bg-white/80 backdrop-blur-md z-30 flex-shrink-0">
+            <div className="relative border-b border-[var(--card-border)] p-6 pb-4 bg-[var(--card-bg)]/80 backdrop-blur-xl z-30 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400">
+                  <h2 className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--text-muted)]">
                     The Asset Exchange
                   </h2>
                   <div className="mt-1 flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 shadow-sm">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--gray-bg)] shadow-sm">
                       <Building2 className="h-5 w-5 text-white" />
                     </div>
-                    <Odometer value={influenceBucks} className="text-3xl font-bold text-slate-900" />
+                    <Odometer value={influenceBucks} className="text-3xl font-bold text-[var(--text-primary)] tabular-nums" />
                     <div className="ml-2 flex items-center gap-1 text-[#00C805]">
                       <TrendingUp className="h-3 w-3" />
                       <span className="text-[10px] font-bold uppercase tracking-widest">Live</span>
@@ -697,14 +697,14 @@ export default function ShopModal({ isOpen, onClose }: { isOpen: boolean; onClos
                 </div>
                 <button
                   onClick={handleClose}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-50 transition-colors hover:bg-slate-100"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--gray-surface)] transition-colors hover:bg-[var(--gray-bg)]"
                 >
-                  <X className="h-5 w-5 text-slate-400" />
+                  <X className="h-5 w-5 text-[var(--text-muted)]" />
                 </button>
               </div>
 
               {/* Tabs */}
-              <div className="mt-6 flex gap-1 rounded-xl bg-slate-50 p-1">
+              <div className="mt-6 flex gap-1 rounded-xl bg-[var(--gray-surface)] p-1">
                 {[
                   { id: 'exchange', label: 'Exchange', icon: Landmark },
                   { id: 'capital', label: 'Capital', icon: Box },
@@ -720,8 +720,8 @@ export default function ShopModal({ isOpen, onClose }: { isOpen: boolean; onClos
                     }}
                     className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-[10px] font-bold uppercase tracking-widest transition-all ${
                       activeTab === tab.id 
-                        ? 'bg-white text-slate-900 shadow-sm' 
-                        : 'text-slate-400 hover:text-slate-600'
+                        ? 'bg-[var(--card-bg)] text-[var(--text-primary)] shadow-sm' 
+                        : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                     }`}
                   >
                     <tab.icon className={`h-3 w-3 ${activeTab === tab.id ? 'text-[#00C805]' : ''}`} />
@@ -758,7 +758,7 @@ export default function ShopModal({ isOpen, onClose }: { isOpen: boolean; onClos
                       <>
                         {/* Opportunity Banners */}
                         <div className="space-y-3">
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Market Opportunities</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Market Opportunities</p>
                           <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x">
                             <div className="snap-center w-full flex-shrink-0">
                               <OpportunityBanner 
@@ -781,19 +781,19 @@ export default function ShopModal({ isOpen, onClose }: { isOpen: boolean; onClos
 
                         {/* Ad Grant */}
                         <div className="space-y-3">
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Subsidized Capital</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Subsidized Capital</p>
                           <button 
                             onClick={handleSponsorBriefing}
                             disabled={cooldownSeconds > 0}
-                            className="w-full flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 p-4 transition-all hover:bg-white group disabled:opacity-70"
+                            className="w-full flex items-center justify-between rounded-2xl border border-slate-100 bg-[var(--gray-surface)] p-4 transition-all hover:bg-[var(--card-bg)] group disabled:opacity-70"
                           >
                             <div className="flex items-center gap-4">
-                              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-900 shadow-sm">
+                              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--gray-bg)] shadow-sm">
                                 <PlayCircle className="h-6 w-6 text-[#00C805]" />
                               </div>
                               <div className="text-left">
-                                <h4 className="text-sm font-bold text-slate-900">Sponsor Briefing</h4>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                <h4 className="text-sm font-bold text-[var(--text-primary)]">Sponsor Briefing</h4>
+                                <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
                                   {cooldownSeconds > 0 ? (
                                     <span className="flex items-center gap-1">
                                       <Clock className="h-2 w-2" /> Next Briefing: {Math.floor(cooldownSeconds / 60)}:{(cooldownSeconds % 60).toString().padStart(2, '0')}
@@ -810,7 +810,7 @@ export default function ShopModal({ isOpen, onClose }: { isOpen: boolean; onClos
 
                         {/* Currency Bundles */}
                         <div className="space-y-3">
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Capital Injections</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Capital Injections</p>
                           {EXCHANGE_PRODUCTS.map(p => <ProductCard key={p.id} product={p} onClick={handleAcquire} />)}
                         </div>
                       </>
@@ -819,7 +819,7 @@ export default function ShopModal({ isOpen, onClose }: { isOpen: boolean; onClos
                     {activeTab === 'capital' && (
                       <>
                         <div className="space-y-3">
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Architectural Archives</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Architectural Archives</p>
                           <div className="grid grid-cols-1 gap-3">
                             {CAPITAL_PRODUCTS.filter(p => p.type === 'GACHA').map(p => (
                               <ProductCard key={p.id} product={p} onClick={handleAcquire} icon={Package} />
@@ -828,7 +828,7 @@ export default function ShopModal({ isOpen, onClose }: { isOpen: boolean; onClos
                         </div>
 
                         <div className="space-y-3 pt-4">
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Municipal Rights</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Municipal Rights</p>
                           <div className="grid grid-cols-3 gap-2">
                             <KeyAssetCard 
                               tier="MUNICIPAL" 
@@ -873,8 +873,8 @@ export default function ShopModal({ isOpen, onClose }: { isOpen: boolean; onClos
                             return (
                               <div key={tier.id} className="relative h-[200px] w-full rounded-2xl bg-slate-100 flex flex-col items-center justify-center text-center p-8 border border-dashed border-slate-300">
                                 <Briefcase className="h-8 w-8 text-slate-300 mb-4" />
-                                <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400">Insider&apos;s Club Locked</h3>
-                                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mt-2">Ownership of 5 Parcels Required</p>
+                                <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--text-muted)]">Insider&apos;s Club Locked</h3>
+                                <p className="text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)] mt-2">Ownership of 5 Parcels Required</p>
                               </div>
                             );
                           }
@@ -901,15 +901,15 @@ export default function ShopModal({ isOpen, onClose }: { isOpen: boolean; onClos
                   >
                     <div className="relative">
                       <div className="absolute inset-0 animate-ping rounded-full bg-[#00C805]/20" />
-                      <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-slate-50 border-2 border-slate-100">
+                      <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-[var(--gray-surface)] border-2 border-slate-100">
                         <Loader2 className="h-8 w-8 animate-spin text-[#00C805]" />
                       </div>
                     </div>
-                    <h3 className="mt-8 text-lg font-bold text-slate-900 uppercase tracking-widest">Authenticating...</h3>
-                    <p className="mt-2 text-[10px] text-slate-400 uppercase tracking-[0.3em]">Institutional Secure Gateway</p>
-                    <div className="mt-10 flex items-center gap-2 rounded-full bg-slate-50 px-5 py-2">
+                    <h3 className="mt-8 text-lg font-bold text-[var(--text-primary)] uppercase tracking-widest">Authenticating...</h3>
+                    <p className="mt-2 text-[10px] text-[var(--text-muted)] uppercase tracking-[0.3em]">Institutional Secure Gateway</p>
+                    <div className="mt-10 flex items-center gap-2 rounded-full bg-[var(--gray-surface)] px-5 py-2">
                       <ShieldCheck className="h-3 w-3 text-[#00C805]" />
-                      <span className="text-[8px] font-bold uppercase tracking-[0.3em] text-slate-500">256-Bit Encrypted Transaction</span>
+                      <span className="text-[8px] font-bold uppercase tracking-[0.3em] text-[var(--text-muted)]">256-Bit Encrypted Transaction</span>
                     </div>
                   </motion.div>
                 ) : shopState === "manufacturing" ? (
@@ -952,37 +952,37 @@ export default function ShopModal({ isOpen, onClose }: { isOpen: boolean; onClos
                         initial={{ scale: 0, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ delay: 0.4, type: "spring" }}
-                        className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 border-4 border-white"
+                        className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--gray-bg)] border-4 border-white"
                       >
                         <CheckCircle2 className="h-4 w-4 text-[#00C805]" />
                       </motion.div>
                     </motion.div>
 
-                    <h3 className="mt-8 text-xl font-extrabold text-slate-900 uppercase tracking-[0.2em]">Acquisition Complete</h3>
+                    <h3 className="mt-8 text-xl font-extrabold text-[var(--text-primary)] uppercase tracking-[0.2em]">Acquisition Complete</h3>
                     
                     <div className="mt-6 space-y-4">
                       <div className="flex flex-col items-center">
-                        <div className="bg-slate-50 px-6 py-3 rounded-2xl border border-slate-100 shadow-sm min-w-[200px]">
+                        <div className="bg-[var(--gray-surface)] px-6 py-3 rounded-2xl border border-slate-100 shadow-sm min-w-[200px]">
                           {selectedProduct?.type === 'KEY' ? (
-                            <span className="text-sm font-extrabold text-slate-900 uppercase tracking-widest">
+                            <span className="text-sm font-extrabold text-[var(--text-primary)] uppercase tracking-widest">
                               {userLocation ? "Austin, TX Key" : "City Key"} Secured
                             </span>
                           ) : selectedProduct?.type === 'GACHA' ? (
-                            <span className="text-sm font-extrabold text-slate-900 uppercase tracking-widest">
+                            <span className="text-sm font-extrabold text-[var(--text-primary)] uppercase tracking-widest">
                               {selectedProduct.name} Secured
                             </span>
                           ) : (
                             <>
-                              <span className="text-2xl font-mono font-bold text-slate-900 tabular-nums">
+                              <span className="text-2xl font-mono font-bold text-[var(--text-primary)] tabular-nums">
                                 {selectedProduct?.amount ? `+${selectedProduct.amount.toLocaleString()}` : ""}
                               </span>
-                              <span className="ml-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                              <span className="ml-2 text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
                                 {selectedProduct?.type === 'PERMIT' ? "Zoning Permits" : "Influence Bucks"}
                               </span>
                             </>
                           )}
                         </div>
-                        <p className="mt-3 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] opacity-60">
+                        <p className="mt-3 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-[0.2em] opacity-60">
                           {selectedProduct?.label} • Asset Authenticated
                         </p>
                       </div>
@@ -994,7 +994,7 @@ export default function ShopModal({ isOpen, onClose }: { isOpen: boolean; onClos
                     
                     <button
                       onClick={() => setShopState("idle")}
-                      className="mt-10 min-w-[240px] rounded-xl bg-slate-900 px-8 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-white transition-all hover:bg-slate-800 active:scale-95 shadow-xl shadow-slate-200"
+                      className="mt-10 min-w-[240px] rounded-xl bg-[var(--gray-bg)] px-8 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-white transition-all hover:bg-[var(--gray-surface)] active:scale-95 shadow-xl shadow-slate-200"
                     >
                       Return to Exchange
                     </button>
@@ -1003,8 +1003,8 @@ export default function ShopModal({ isOpen, onClose }: { isOpen: boolean; onClos
               </AnimatePresence>
             </div>
 
-            <div className="bg-slate-50 p-4 border-t border-slate-100 z-30 flex-shrink-0">
-              <p className="text-[8px] font-bold uppercase tracking-[0.3em] text-slate-400 text-center">
+            <div className="bg-[var(--gray-surface)] p-4 border-t border-slate-100 z-30 flex-shrink-0">
+              <p className="text-[8px] font-bold uppercase tracking-[0.3em] text-[var(--text-muted)] text-center">
                 Official Marketplace Infrastructure • Institutional Level Security
               </p>
             </div>

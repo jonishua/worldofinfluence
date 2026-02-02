@@ -127,16 +127,16 @@ export default function SupplyDropModal({ dropId, onClose }: SupplyDropModalProp
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
-            className="slide-up w-full max-w-[520px] rounded-t-[28px] border border-slate-100/60 bg-white px-6 pb-6 pt-6 shadow-[0_-16px_40px_rgba(15,23,42,0.22)]"
+            className="slide-up w-full max-w-[520px] rounded-t-[28px] border border-[var(--card-border)] bg-[var(--card-bg)] px-6 pb-6 pt-6 shadow-[0_-16px_40px_rgba(0,0,0,0.15)] backdrop-blur-xl"
           >
             <div className="mb-6 flex items-center justify-between">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-500">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[var(--text-muted)]">
                 {style.label} / {drop.rarity}
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-full border border-slate-200 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400"
+                className="rounded-full border border-[var(--card-border)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -153,7 +153,7 @@ export default function SupplyDropModal({ dropId, onClose }: SupplyDropModalProp
                 <motion.div
                   initial={{ scale: 0.6, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-white/90 text-center backdrop-blur"
+                  className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-[var(--card-bg)]/90 text-center backdrop-blur"
                 >
                   <div className="font-mono text-3xl font-semibold text-[#00C805]">
                     +{reward.amount}
@@ -191,7 +191,7 @@ export default function SupplyDropModal({ dropId, onClose }: SupplyDropModalProp
                   </svg>
                   <button
                     type="button"
-                    className="absolute inset-0 flex touch-none items-center justify-center text-slate-400 transition-all active:scale-95 active:text-[#00C805]"
+                    className="absolute inset-0 flex touch-none items-center justify-center text-[var(--text-muted)] transition-all active:scale-95 active:text-[var(--accent-color)]"
                     onPointerDown={(event) => {
                       event.preventDefault();
                       event.currentTarget.setPointerCapture(event.pointerId);
@@ -216,7 +216,7 @@ export default function SupplyDropModal({ dropId, onClose }: SupplyDropModalProp
               )}
             </div>
 
-            <div className="text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+            <div className="text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
               Hold to verify biometric signature
             </div>
           </motion.div>

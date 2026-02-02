@@ -385,7 +385,7 @@ export default function TerminalModal({ isOpen, onClose }: TerminalModalProps) {
                 className={`w-full rounded-[14px] px-6 py-4 text-sm font-semibold uppercase tracking-[0.2em] transition-all ${
                   canSpin
                     ? "bg-[#00C805] text-white shadow-[0_0_20px_rgba(0,200,5,0.5)] active:scale-95"
-                    : "bg-slate-700/50 text-slate-400 cursor-not-allowed"
+                    : "bg-[var(--gray-surface)]/50 text-[var(--text-muted)] cursor-not-allowed"
                 }`}
               >
                 {isSpinning ? (
@@ -423,7 +423,7 @@ export default function TerminalModal({ isOpen, onClose }: TerminalModalProps) {
                   } disabled:opacity-50`}
                 >
                   <motion.div
-                    className="absolute top-1 h-4 w-4 rounded-full bg-white"
+                    className="absolute top-1 h-4 w-4 rounded-full bg-[var(--card-bg)]"
                     animate={{ x: autoSpin ? 20 : 4 }}
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   />

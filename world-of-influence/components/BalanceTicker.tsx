@@ -85,20 +85,20 @@ export default function BalanceTicker() {
 
       {isModalOpen && (
         <div className="fixed inset-0 z-[700] flex items-end justify-center bg-black/40 px-4 pb-6 pt-10 backdrop-blur-[2px]">
-          <div className="w-full max-w-[520px] rounded-[20px] bg-white px-6 py-7 text-left shadow-[0_-10px_40px_rgba(0,0,0,0.2)]">
+          <div className="w-full max-w-[520px] rounded-[20px] bg-[var(--card-bg)] px-6 py-7 text-left shadow-[0_-10px_40px_rgba(0,0,0,0.15)]">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
                 Income Detail
               </p>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500"
+                className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]"
               >
                 Close
               </button>
             </div>
-            <div className="mt-4 space-y-3 text-sm text-slate-600">
+            <div className="mt-4 space-y-3 text-sm text-[var(--text-primary)]">
               <div className="flex items-center justify-between">
                 <span>Base Rent</span>
                 <span className="font-mono tabular-nums">${baseRate.toFixed(9)}/sec</span>
@@ -109,9 +109,9 @@ export default function BalanceTicker() {
                   {isBoostActive ? `${boostMultiplier}x` : "1x"}
                 </span>
               </div>
-              <div className="flex items-center justify-between border-t border-slate-200 pt-3">
-                <span className="font-semibold text-slate-800">Total Output</span>
-                <span className="font-mono tabular-nums text-slate-800">
+              <div className="flex items-center justify-between border-t border-[var(--card-border)] pt-3">
+                <span className="font-semibold text-[var(--text-primary)]">Total Output</span>
+                <span className="font-mono tabular-nums text-[var(--text-primary)]">
                   ${totalRate.toFixed(9)}/sec
                 </span>
               </div>

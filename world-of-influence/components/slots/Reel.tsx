@@ -98,7 +98,7 @@ export default function Reel({
   }, [isSpinning, targetSymbol, stopDelay, isNearMiss, y]);
 
   return (
-    <div className="relative h-[80px] w-[80px] overflow-hidden rounded-[12px] border border-white/20 bg-white/10 backdrop-blur-md">
+    <div className="relative h-[80px] w-[80px] overflow-hidden rounded-[12px] border border-[var(--card-border)] bg-[var(--card-bg)]/10 backdrop-blur-md">
       {/* Mask for top/bottom fade */}
       <div className="absolute inset-0 z-10 pointer-events-none">
         <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-[#1F2937] to-transparent" />

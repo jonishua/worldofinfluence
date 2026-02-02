@@ -34,9 +34,9 @@ export interface EconomySlice {
 export const createEconomySlice: StateCreator<GameState, [], [], EconomySlice> = (set, get) => ({
   rentBalance: 0,
   walletBalance: 0,
-  credits: 500,
-  influenceBucks: 0,
-  zoningPermits: 5,
+  credits: 2,
+  influenceBucks: 100,
+  zoningPermits: 1,
   lastSettledTime: Date.now(),
   escrowLimit: getEscrowLimitMs(),
   boostEndTime: null,

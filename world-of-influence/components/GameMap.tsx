@@ -86,26 +86,37 @@ function useSmoothedLocation(target: LatLng) {
 function AutoCenter({
   center,
   isUserInteracting,
-  satelliteMode,
+  satelliteMode: _satelliteMode,
+  droneStatus,
+  isTransitioning,
 }: {
   center: LatLng;
   isUserInteracting: boolean;
   satelliteMode: boolean;
+  droneStatus: string;
+  isTransitioning: boolean;
 }) {
   const map = useMap();
 
   useEffect(() => {
-    // In satellite mode, we only auto-center if we're active and not dragging
-    // In targeting mode, we don't auto-center (let the user pan)
-    if (satelliteMode) {
-      // Logic for active drone following or targeting jumps is handled by MapFlyToHandler
+    if (droneStatus === "targeting" || isTransitioning) {
       return;
     }
 
-    if (!isUserInteracting) {
-      map.setView([center.lat, center.lng], map.getZoom(), { animate: true });
+    if (!isUserInteracting || droneStatus === "active") {
+      const mapCenter = map.getCenter();
+      const latDelta = Math.abs(mapCenter.lat - center.lat);
+      const lngDelta = Math.abs(mapCenter.lng - center.lng);
+      const alreadyThere = latDelta < 1e-5 && lngDelta < 1e-5;
+      if (droneStatus === "active" && alreadyThere) {
+        return;
+      }
+      map.setView([center.lat, center.lng], map.getZoom(), { 
+        animate: droneStatus === "active" ? false : true,
+        duration: 0.1 
+      });
     }
-  }, [center.lat, center.lng, isUserInteracting, map, satelliteMode]);
+  }, [center.lat, center.lng, isUserInteracting, map, droneStatus, isTransitioning]);
 
   return null;
 }
@@ -144,12 +155,39 @@ function ZoomWatcher({ onZoomChange }: { onZoomChange: (zoom: number) => void })
 
 function MapClickHandler({
   onSelectParcel,
+  markerClickedRef,
 }: {
   onSelectParcel: (lat: number, lng: number) => void;
+  markerClickedRef: React.MutableRefObject<boolean>;
 }) {
+  const [mouseDownPos, setMouseDownPos] = useState<L.Point | null>(null);
+
   useMapEvents({
-    click: (event) => {
-      onSelectParcel(event.latlng.lat, event.latlng.lng);
+    mousedown: (event) => {
+      setMouseDownPos(event.containerPoint);
+      // Don't reset here - marker mousedown may have already set it
+      // We reset after handling in mouseup instead
+    },
+    mouseup: (event) => {
+      if (!mouseDownPos) return;
+      
+      // If a marker was clicked, skip parcel selection
+      if (markerClickedRef.current) {
+        setMouseDownPos(null);
+        markerClickedRef.current = false;
+        return;
+      }
+      
+      const mouseUpPos = event.containerPoint;
+      const dist = mouseDownPos.distanceTo(mouseUpPos);
+      
+      // If the mouse moved more than 5 pixels, it's a drag/swipe, not a click
+      if (dist < 5) {
+        onSelectParcel(event.latlng.lat, event.latlng.lng);
+      }
+      
+      setMouseDownPos(null);
+      markerClickedRef.current = false;
     },
   });
 
@@ -195,13 +233,40 @@ function MapBoundsWatcher({
   return null;
 }
 
-function MapFlyToHandler() {
+function MapFlyToHandler({
+  onTransitionStart,
+  onTransitionEnd,
+}: {
+  onTransitionStart: () => void;
+  onTransitionEnd: () => void;
+}) {
   const map = useMap();
   const flyToTarget = useMapStore((state) => state.flyToTarget);
   const triggerMapFlyTo = useMapStore((state) => state.triggerMapFlyTo);
   const droneStatus = useMapStore((state) => state.droneStatus);
   const completeDeployment = useMapStore((state) => state.completeDeployment);
   const deploymentTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const deploymentCompletedRef = useRef(false);
+
+  // Lock map interaction during drone flight or active session
+  useEffect(() => {
+    const mapWithTap = map as typeof map & { tap?: { disable: () => void; enable: () => void } };
+    if (droneStatus === "deploying" || droneStatus === "active") {
+      map.dragging.disable();
+      map.boxZoom.disable();
+      map.keyboard.disable();
+      if (mapWithTap.tap) mapWithTap.tap.disable();
+    } else {
+      map.dragging.enable();
+      map.boxZoom.enable();
+      map.keyboard.enable();
+      if (mapWithTap.tap) mapWithTap.tap.enable();
+    }
+    // Keep zoom enabled as per requirements
+    map.touchZoom.enable();
+    map.doubleClickZoom.enable();
+    map.scrollWheelZoom.enable();
+  }, [map, droneStatus]);
 
   useEffect(() => {
     if (flyToTarget) {
@@ -210,30 +275,46 @@ function MapFlyToHandler() {
       
       let zoom = 18;
       if (isDeploying) zoom = 19;
-      if (isTargeting) zoom = 17;
+      if (isTargeting) zoom = 14;
 
-      // We capture values for the animation
       const target = [flyToTarget.lat, flyToTarget.lng] as [number, number];
-      
-      // Clear the target immediately to prevent re-triggers, 
-      // but only if it's NOT a deployment flight (deployment timer needs flyToTarget to be stable)
-      // Actually, it's safer to clear it and manage the deployment timer separately.
       triggerMapFlyTo(null);
-
+      deploymentCompletedRef.current = false;
+      onTransitionStart();
+      
+      const duration = isDeploying ? 4 : (isTargeting ? 1.5 : 3);
       map.flyTo(target, zoom, {
-        duration: isDeploying ? 4 : (isTargeting ? 2.5 : 3),
+        duration,
         easeLinearity: isDeploying ? 0.1 : 0.25,
       });
+
+      const handleMoveEnd = () => {
+        map.off('moveend', handleMoveEnd);
+        if (deploymentTimerRef.current) {
+          clearTimeout(deploymentTimerRef.current);
+          deploymentTimerRef.current = null;
+        }
+        if (deploymentCompletedRef.current) return;
+        deploymentCompletedRef.current = true;
+        if (isDeploying) {
+          completeDeployment();
+        }
+        onTransitionEnd();
+      };
+      map.on('moveend', handleMoveEnd);
 
       if (isDeploying) {
         if (deploymentTimerRef.current) clearTimeout(deploymentTimerRef.current);
         deploymentTimerRef.current = setTimeout(() => {
-          completeDeployment();
           deploymentTimerRef.current = null;
-        }, 4000);
+          if (deploymentCompletedRef.current) return;
+          deploymentCompletedRef.current = true;
+          completeDeployment();
+          onTransitionEnd();
+        }, Math.max(duration * 1000 + 500, 4500));
       }
     }
-  }, [flyToTarget, map, triggerMapFlyTo, droneStatus, completeDeployment]);
+  }, [flyToTarget, map, triggerMapFlyTo, droneStatus, completeDeployment, onTransitionStart, onTransitionEnd]);
 
   // Cleanup timer on unmount
   useEffect(() => {
@@ -251,43 +332,45 @@ function TargetingReticle() {
   const droneStatus = useMapStore((state) => state.droneStatus);
   const satelliteMode = useMapStore((state) => state.satelliteMode);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const parcelCenterRef = useRef<LatLng | null>(null);
 
   useEffect(() => {
-    if (!satelliteMode) {
-      requestAnimationFrame(() => setPos(null));
-      return;
+    if (!satelliteMode || droneStatus !== "targeting") {
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+      parcelCenterRef.current = null;
+      const clearId = setTimeout(() => setPos(null), 0);
+      return () => clearTimeout(clearId);
     }
 
-    if (droneStatus === "active") {
-      // Always center in active mode
-      const updateCenter = () => {
-        const size = map.getSize();
-        setPos({ x: size.x / 2, y: size.y / 2 });
-      };
-      
-      // Use requestAnimationFrame to avoid synchronous setState warning
-      requestAnimationFrame(updateCenter);
-      
-      map.on("resize", updateCenter);
-      return () => map.off("resize", updateCenter);
-    }
+    if (selectedParcel) {
+      parcelCenterRef.current = selectedParcel.center;
 
-    if (droneStatus === "targeting" && selectedParcel) {
-      const update = () => {
-        const point = map.latLngToContainerPoint(selectedParcel.center);
-        setPos({ x: point.x, y: point.y });
+      const scheduleUpdate = () => {
+        if (rafRef.current != null) return;
+        rafRef.current = requestAnimationFrame(() => {
+          rafRef.current = null;
+          const center = parcelCenterRef.current;
+          if (!center) return;
+          const point = map.latLngToContainerPoint(center);
+          setPos({ x: point.x, y: point.y });
+        });
       };
 
-      // Use requestAnimationFrame to avoid synchronous setState warning
-      requestAnimationFrame(update);
-      
-      map.on("move zoom", update);
+      scheduleUpdate();
+      map.on("move zoom", scheduleUpdate);
       return () => {
-        map.off("move zoom", update);
+        map.off("move zoom", scheduleUpdate);
+        if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+        parcelCenterRef.current = null;
       };
     }
 
-    requestAnimationFrame(() => setPos(null));
+    parcelCenterRef.current = null;
+    const clearId = setTimeout(() => setPos(null), 0);
+    return () => clearTimeout(clearId);
   }, [map, selectedParcel, droneStatus, satelliteMode]);
 
   if (!pos) return null;
@@ -337,7 +420,7 @@ const userIcon = L.divIcon({
 const ghostIcon = L.divIcon({
   className: "ghost-marker",
   html: renderToStaticMarkup(
-    <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-slate-800/40 shadow-lg backdrop-blur-[1px]">
+    <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--card-border)] bg-[var(--gray-surface)]/40 shadow-lg backdrop-blur-[1px]">
       <UserRound className="h-4 w-4 text-white/60" />
     </div>,
   ),
@@ -348,7 +431,7 @@ const ghostIcon = L.divIcon({
 const droneIcon = L.divIcon({
   className: "drone-marker",
   html: renderToStaticMarkup(
-    <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-orange-500 bg-slate-900 shadow-[0_0_20px_rgba(245,158,11,0.5)]">
+    <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-orange-500 bg-[var(--gray-bg)] shadow-[0_0_20px_rgba(245,158,11,0.5)]">
       <Drone className="h-7 w-7 text-orange-500 animate-pulse" />
     </div>,
   ),
@@ -381,9 +464,10 @@ const buildDropIcon = (rarity: DropRarity, isInRange: boolean, isGlobal: boolean
 
 
 export default function GameMap() {
-  const accentColor = useThemeStore(
-    (state) => themeById[state.currentThemeId].accentColor,
-  );
+  const currentThemeId = useThemeStore((state) => state.currentThemeId);
+  const theme = themeById[currentThemeId];
+  const accentColor = theme.accentColor;
+  const gridColors = theme.grid;
   const userLocation = useMapStore((state) => state.userLocation);
   const satelliteMode = useMapStore((state) => state.satelliteMode);
   const viewingMode = useMapStore((state) => state.viewingMode);
@@ -414,10 +498,13 @@ export default function GameMap() {
   const ownedParcels = usePropertyStore((state) => state.ownedParcels);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isUserInteracting, setIsUserInteracting] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const toastTimeout = useRef<number | null>(null);
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
   const [selectedDropId, setSelectedDropId] = useState<string | null>(null);
   const lastHapticPos = useRef<LatLng | null>(null);
+  // Ref to track if a marker was clicked (to prevent parcel selection)
+  const markerClickedRef = useRef<boolean>(false);
 
   useEffect(() => {
     if (droneStatus === "active") {
@@ -595,7 +682,7 @@ export default function GameMap() {
     const parcel = getGridBoundsWithReference(lat, lng, gridReferenceLat);
     setSelectedParcel(parcel);
     
-    // In targeting mode, fly to the selected location at zoom 17
+    // In targeting mode, fly to the selected location at zoom 14
     if (droneStatus === "targeting") {
       triggerMapFlyTo(parcel.center);
     }
@@ -695,11 +782,13 @@ export default function GameMap() {
       <div className="absolute inset-0 z-0">
         <MapContainer
         center={[targetLocation.lat, targetLocation.lng]}
-        zoom={maxMapZoom}
+        zoom={mapZoom}
         minZoom={minMapZoom}
         maxZoom={maxMapZoom}
-        scrollWheelZoom
-        preferCanvas={true}
+        scrollWheelZoom={droneStatus === "active" ? "center" : true}
+        doubleClickZoom={droneStatus === "active" ? "center" : true}
+        touchZoom={droneStatus === "active" ? "center" : true}
+        preferCanvas={false}
         zoomControl={false}
         attributionControl={false}
         className="h-full w-full"
@@ -714,28 +803,32 @@ export default function GameMap() {
 
         <MapInteractionWatcher onInteractChange={setIsUserInteracting} />
         <ZoomWatcher onZoomChange={setMapZoom} />
-        <AutoCenter center={smoothedLocation} isUserInteracting={isUserInteracting} satelliteMode={satelliteMode} />
-        <MapClickHandler onSelectParcel={handleSelectParcel} />
+        <AutoCenter 
+          center={smoothedLocation} 
+          isUserInteracting={isUserInteracting} 
+          satelliteMode={satelliteMode} 
+          droneStatus={droneStatus} 
+          isTransitioning={isTransitioning}
+        />
+        <MapClickHandler onSelectParcel={handleSelectParcel} markerClickedRef={markerClickedRef} />
         <MapBoundsWatcher onBoundsChange={setMapBounds} />
-        <MapFlyToHandler />
+        <MapFlyToHandler 
+          onTransitionStart={() => setIsTransitioning(true)} 
+          onTransitionEnd={() => setIsTransitioning(false)} 
+        />
         <TargetingReticle />
 
         {tacticalGrid.map((cell) => (
           <Rectangle
             key={`tactical-${cell.id}`}
             bounds={cell.corners}
+            interactive={false}
             pathOptions={{
               color: "#00C805",
               weight: 1,
               fillColor: "#00C805",
               fillOpacity: 0.1,
               className: "tactical-cell animate-pulse",
-            }}
-            eventHandlers={{
-              click: (event) => {
-                event.originalEvent?.stopPropagation?.();
-                handleSelectParcel(cell.center.lat, cell.center.lng);
-              },
             }}
           />
         ))}
@@ -746,18 +839,13 @@ export default function GameMap() {
             <Rectangle
               key={`grid-${square.id}`}
               bounds={square.corners}
+              interactive={false}
               pathOptions={{
-                color: owned ? "#ffffff" : "#cbd5e1",
+                color: owned ? gridColors.strokeOwned : gridColors.strokeUnowned,
                 weight: owned ? 2 : 1,
-                fillColor: owned ? "#00C805" : "#94a3b8",
-                fillOpacity: owned ? 0.5 : 0.12,
+                fillColor: owned ? gridColors.fillOwned : gridColors.fillUnowned,
+                fillOpacity: owned ? gridColors.fillOwnedOpacity : gridColors.fillUnownedOpacity,
                 className: owned ? "grid-owned transition-all duration-500" : "grid-unowned",
-              }}
-              eventHandlers={{
-                click: (event) => {
-                  event.originalEvent?.stopPropagation?.();
-                  handleSelectParcel(square.center.lat, square.center.lng);
-                },
               }}
             />
           );
@@ -767,7 +855,7 @@ export default function GameMap() {
           <Polygon
             positions={selectedBounds.corners}
             pathOptions={{
-              color: "#ffffff",
+              color: gridColors.selectionStroke,
               weight: 2,
               dashArray: "6 4",
               fillOpacity: 0,
@@ -787,16 +875,16 @@ export default function GameMap() {
           }}
         />
 
-        {/* User Marker */}
-        {userLocation && (
+        {/* User Marker - Only show if not current focal point in satellite mode or if transitioning */}
+        {userLocation && (!satelliteMode || viewingMode !== "personal" || isTransitioning) && (
           <Marker 
             position={[userLocation.lat, userLocation.lng]} 
             icon={userIcon} 
-            opacity={satelliteMode ? 0.5 : 1}
+            opacity={1}
           />
         )}
 
-        {/* Drone Marker */}
+        {/* Drone Marker - Only show if not current focal point or if transitioning */}
         {droneStatus === "deploying" && droneCurrentLocation && (
           <Marker 
             position={[droneCurrentLocation.lat, droneCurrentLocation.lng]} 
@@ -804,7 +892,7 @@ export default function GameMap() {
           />
         )}
 
-        {droneStatus === "active" && droneTetherCenter && (
+        {droneStatus === "active" && droneTetherCenter && (viewingMode !== "drone" || isTransitioning) && (
           <Marker 
             position={[droneTetherCenter.lat, droneTetherCenter.lng]} 
             icon={droneIcon} 
@@ -840,8 +928,17 @@ export default function GameMap() {
               key={`global-${drop.id}`}
               position={[drop.location.lat, drop.location.lng]}
               icon={buildDropIcon(drop.rarity, inRange, true)}
+              zIndexOffset={1000}
               eventHandlers={{
-                click: () => handleGlobalDropClick(drop),
+                mousedown: (e) => {
+                  markerClickedRef.current = true;
+                  L.DomEvent.stopPropagation(e);
+                },
+                click: (e) => {
+                  markerClickedRef.current = true;
+                  L.DomEvent.stopPropagation(e);
+                  handleGlobalDropClick(drop);
+                },
               }}
             />
           );
@@ -882,29 +979,41 @@ export default function GameMap() {
                 key={drop.id}
                 position={[drop.location.lat, drop.location.lng]}
                 icon={buildDropIcon(drop.rarity, inRange)}
+                zIndexOffset={1000}
                 eventHandlers={{
-                  click: () => handleDropClick(drop),
+                  mousedown: (e) => {
+                    markerClickedRef.current = true;
+                    L.DomEvent.stopPropagation(e);
+                  },
+                  click: (e) => {
+                    markerClickedRef.current = true;
+                    L.DomEvent.stopPropagation(e);
+                    handleDropClick(drop);
+                  },
                 }}
               />
             );
           })}
       </MapContainer>
 
-      {!satelliteMode && (
+      {/* Fixed Center Avatar/Drone - Hidden during camera jumps */}
+      {( (!satelliteMode) || (satelliteMode && droneStatus !== "targeting") ) && !isTransitioning && (
         <div className="pointer-events-none absolute left-1/2 top-1/2 z-[600] -translate-x-1/2 -translate-y-1/2">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/50 bg-slate-950/90 shadow-[0_12px_26px_rgba(15,23,42,0.45)]">
-            <UserRound className="h-6 w-6 text-[var(--accent-color)]" />
-          </div>
+          {viewingMode === "personal" ? (
+            <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/50 bg-slate-950/90 shadow-[0_12px_26px_rgba(15,23,42,0.45)]">
+              <UserRound className="h-6 w-6 text-[var(--accent-color)]" />
+            </div>
+          ) : (
+            droneStatus === "active" && (
+              <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-orange-500 bg-[var(--gray-bg)] shadow-[0_0_20px_rgba(245,158,11,0.5)]">
+                <Drone className="h-7 w-7 text-orange-500 animate-pulse" />
+              </div>
+            )
+          )}
         </div>
       )}
 
-      {satelliteMode && (
-        <div className="pointer-events-none absolute left-1/2 top-1/2 z-[600] -translate-x-1/2 -translate-y-1/2">
-          {/* Static center elements for non-targeting modes if needed, but handled by TargetingReticle */}
-        </div>
-      )}
-
-        {toastMessage && (
+      {toastMessage && (
           <div className="pointer-events-none absolute left-1/2 top-24 z-[700] -translate-x-1/2">
             <div className="rounded-full border border-[var(--card-border)] bg-[var(--card-bg)]/95 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-primary)] shadow-[0_12px_30px_rgba(15,23,42,0.12)]">
               {toastMessage}

@@ -59,7 +59,7 @@ export default function AssetTicker() {
             transition={{ duration: 0.3 }}
             className="flex items-center gap-2"
           >
-            <Icon className="h-3.5 w-3.5 text-[#00C805]" />
+            <Icon className="h-3.5 w-3.5 text-[var(--accent-color)]" />
             <span>{active.label}</span>
           </motion.div>
         </AnimatePresence>

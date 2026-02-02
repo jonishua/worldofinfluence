@@ -88,6 +88,31 @@ export default function PurchaseModal() {
   const remoteFee = applyRemoteFee ? Math.ceil(PURCHASE_COST * REMOTE_FILING_FEE_MULTIPLIER) : 0;
   const totalCost = PURCHASE_COST + remoteFee;
 
+  const pickupRadiusMultiplier = useMapStore((state) => state.pickupRadiusMultiplier);
+  const userLocation = useMapStore((state) => state.userLocation);
+  const droneTetherCenter = useMapStore((state) => state.droneTetherCenter);
+
+  const { isOutOfRange, distanceLabel } = useMemo(() => {
+    if (!selectedParcel) return { isOutOfRange: false, distanceLabel: "" };
+
+    const interactionRadiusKm = metersToKilometers(BASE_INTERACTION_RADIUS_METERS * pickupRadiusMultiplier);
+    
+    const isDroneView = satelliteMode && droneStatus === "active" && viewingMode === "drone";
+    const origin = isDroneView ? droneTetherCenter : userLocation;
+
+    if (!origin) return { isOutOfRange: true, distanceLabel: "Location error" };
+
+    const dist = calculateDistance(origin, selectedParcel.center);
+    const maxRadius = isDroneView ? DRONE_BUY_RADIUS_KM : interactionRadiusKm;
+    
+    const isOut = dist > maxRadius;
+    const label = isDroneView 
+      ? `${dist.toFixed(2)} / 0.50 mi`
+      : `${(dist * 1000).toFixed(0)} / ${(interactionRadiusKm * 1000).toFixed(0)}m`;
+
+    return { isOutOfRange: isOut, distanceLabel: label };
+  }, [selectedParcel, satelliteMode, droneStatus, viewingMode, pickupRadiusMultiplier, userLocation, droneTetherCenter]);
+
   const isOwned = selectedParcel ? Boolean(ownedParcels[selectedParcel.id]) : false;
 
   useEffect(() => {
@@ -125,27 +150,7 @@ export default function PurchaseModal() {
       return;
     }
 
-    const pickupRadiusMultiplier = useGameStore.getState().pickupRadiusMultiplier;
-    const interactionRadiusKm = metersToKilometers(BASE_INTERACTION_RADIUS_METERS * pickupRadiusMultiplier);
-    
-    // Determine the origin for distance check
-    const userLocation = useGameStore.getState().userLocation;
-    const droneTetherCenter = useGameStore.getState().droneTetherCenter;
-    const droneStatus = useGameStore.getState().droneStatus;
-    const viewingMode = useGameStore.getState().viewingMode;
-    
-    const isDroneView = satelliteMode && droneStatus === "active" && viewingMode === "drone";
-    const origin = isDroneView ? droneTetherCenter : userLocation;
-
-    if (!origin) {
-      setError("Location services unavailable.");
-      return;
-    }
-
-    const dist = calculateDistance(origin, selectedParcel.center);
-    const maxRadius = isDroneView ? DRONE_BUY_RADIUS_KM : interactionRadiusKm;
-
-    if (dist > maxRadius) {
+    if (isOutOfRange) {
       setError(isDroneView ? "Out of drone scouting range (0.5mi)." : "Target out of physical range.");
       return;
     }
@@ -259,21 +264,21 @@ export default function PurchaseModal() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 40, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="slide-up w-full max-w-[520px] rounded-t-[24px] bg-white px-6 py-8 text-center shadow-[0_-10px_40px_rgba(0,0,0,0.2)]"
+            className="slide-up w-full max-w-[520px] rounded-t-[24px] bg-[var(--card-bg)] px-6 py-8 text-center shadow-[0_-10px_40px_rgba(0,0,0,0.15)] backdrop-blur-xl"
           >
             <div className="text-4xl">📍</div>
             <p className="mt-3 text-2xl font-extrabold text-[var(--text-primary)]">
               {isDroneView ? "Remote Acquisition" : "Acquire Parcel?"}
             </p>
-            <div className="mt-4 space-y-2 rounded-xl bg-slate-50 p-4 dark:bg-slate-900/50">
+            <div className="mt-4 space-y-2 rounded-xl bg-[var(--gray-surface)]/50 p-4">
               <div className="flex justify-between text-sm">
-                <span className="text-slate-500">Base Land Value</span>
+                <span className="text-[var(--text-muted)]">Base Land Value</span>
                 <span className="font-mono font-bold">{PURCHASE_COST} IB</span>
               </div>
               
               {isDroneView && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Remote Filing Fee</span>
+                  <span className="text-[var(--text-muted)]">Remote Filing Fee</span>
                   <span className={`font-mono font-bold ${isSubscriber ? 'text-[#00C805]' : 'text-rose-500'}`}>
                     {isSubscriber ? '-0 IB' : `+${remoteFee} IB`}
                   </span>
@@ -287,7 +292,7 @@ export default function PurchaseModal() {
                 </div>
               )}
 
-              <div className="border-t border-slate-200 pt-2 dark:border-slate-800">
+              <div className="border-t border-[var(--card-border)] pt-2">
                 <div className="flex justify-between text-base font-bold">
                   <span>Total Cost</span>
                   <span className="font-mono text-[var(--accent-color)]">{totalCost} IB</span>
@@ -295,9 +300,14 @@ export default function PurchaseModal() {
               </div>
             </div>
 
-            <p className="mt-4 text-[10px] uppercase tracking-widest text-slate-400">
+            <p className="mt-4 text-[10px] uppercase tracking-widest text-[var(--text-muted)]">
               Coordinates: {selectedParcel.center.lat.toFixed(4)}, {selectedParcel.center.lng.toFixed(4)}
             </p>
+
+            <div className={`mt-2 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-wider ${isOutOfRange ? 'text-rose-500' : 'text-[var(--text-muted)]'}`}>
+              <div className={`h-1.5 w-1.5 rounded-full ${isOutOfRange ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500'}`} />
+              Range: {distanceLabel}
+            </div>
 
             {applyRemoteFee && (
               <button className="mt-4 text-[10px] font-bold uppercase tracking-wider text-[#F59E0B] hover:underline">
@@ -312,15 +322,15 @@ export default function PurchaseModal() {
             <button
               type="button"
               onClick={handlePurchase}
-              disabled={isMinting}
-              className="mt-6 w-full rounded-[16px] bg-[var(--text-primary)] px-4 py-4 text-sm font-semibold uppercase tracking-[0.18em] text-white shadow-[0_6px_16px_rgba(0,0,0,0.15)] transition disabled:opacity-60"
+              disabled={isMinting || isOutOfRange}
+              className="mt-6 w-full rounded-[16px] bg-[var(--accent-color)] px-4 py-4 text-sm font-semibold uppercase tracking-[0.18em] text-white shadow-[0_6px_16px_rgba(0,0,0,0.15)] transition disabled:opacity-60 disabled:bg-[var(--text-muted)]"
             >
-              Confirm Purchase
+              {isOutOfRange ? "Out of Range" : "Confirm Purchase"}
             </button>
             <button
               type="button"
               onClick={handleClose}
-              className="mt-3 w-full rounded-[16px] bg-slate-100 px-4 py-4 text-sm font-semibold uppercase tracking-[0.18em] text-[var(--text-primary)]"
+              className="mt-3 w-full rounded-[16px] bg-[var(--gray-surface)] px-4 py-4 text-sm font-semibold uppercase tracking-[0.18em] text-[var(--text-primary)]"
             >
               Cancel
             </button>
@@ -334,9 +344,9 @@ export default function PurchaseModal() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 40, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="slide-up w-full max-w-[520px] rounded-t-[24px] bg-white px-6 py-8 text-center shadow-[0_-10px_40px_rgba(0,0,0,0.2)]"
+            className="slide-up w-full max-w-[520px] rounded-t-[24px] bg-[var(--card-bg)] px-6 py-8 text-center shadow-[0_-10px_40px_rgba(0,0,0,0.2)] backdrop-blur-xl"
           >
-            <div className="mx-auto h-14 w-14 animate-spin rounded-full border-4 border-slate-200 border-t-[var(--accent-color)]" />
+            <div className="mx-auto h-14 w-14 animate-spin rounded-full border-4 border-[var(--gray-surface)] border-t-[var(--accent-color)]" />
             <motion.p
               key={stepIndex}
               initial={{ opacity: 0, y: 8 }}
@@ -346,7 +356,7 @@ export default function PurchaseModal() {
             >
               {mintingSteps[stepIndex]}
             </motion.p>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-[var(--text-muted)]">
               Securing your digital asset on the chain.
             </p>
           </motion.div>
@@ -359,7 +369,7 @@ export default function PurchaseModal() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 40, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="slide-up w-full max-w-[520px] rounded-t-[24px] bg-white px-6 py-8 text-center shadow-[0_-10px_40px_rgba(0,0,0,0.2)]"
+            className="slide-up w-full max-w-[520px] rounded-t-[24px] bg-[var(--card-bg)] px-6 py-8 text-center shadow-[0_-10px_40px_rgba(0,0,0,0.15)] backdrop-blur-xl"
           >
             <canvas
               ref={confettiCanvasRef}
@@ -386,13 +396,13 @@ export default function PurchaseModal() {
                 <p className="mt-4 text-2xl font-extrabold text-[var(--text-primary)]">
                   {rarity.title}
                 </p>
-                <p className="mt-2 text-sm text-slate-500">
+                <p className="mt-2 text-sm text-[var(--text-muted)]">
                   Rent Multiplier: {rarity.multiplier}
                 </p>
                 <div className={`my-4 text-5xl ${rarity.accentClass}`}>
                   {rarity.emoji}
                 </div>
-                <div className="space-y-2 text-xs font-mono uppercase tracking-[0.2em] text-slate-500">
+                <div className="space-y-2 text-xs font-mono uppercase tracking-[0.2em] text-[var(--text-muted)]">
                   <div>Feature: {resultParcel.visualFeature ?? "Lawn"}</div>
                   <div>
                     Rent: ${resultParcel.rentRate.toFixed(9)}/s
@@ -403,7 +413,7 @@ export default function PurchaseModal() {
             <button
               type="button"
               onClick={handleClose}
-              className="mt-6 w-full rounded-[16px] bg-[var(--text-primary)] px-4 py-4 text-sm font-semibold uppercase tracking-[0.18em] text-white shadow-[0_6px_16px_rgba(0,0,0,0.15)]"
+              className="mt-6 w-full rounded-[16px] bg-[var(--accent-color)] px-4 py-4 text-sm font-semibold uppercase tracking-[0.18em] text-white shadow-[0_6px_16px_rgba(0,0,0,0.15)]"
             >
               Add to Portfolio
             </button>

@@ -143,17 +143,17 @@ export default function PropertySheet() {
       <motion.div
         animate={isWorking ? { x: [-2, 2, -2, 2, 0] } : { x: 0 }}
         transition={{ duration: 0.6, repeat: isWorking ? Infinity : 0 }}
-        className="slide-up relative w-full max-w-[520px] overflow-hidden rounded-t-[24px] bg-white px-6 py-7 text-left shadow-[0_-10px_40px_rgba(0,0,0,0.2)]"
+        className="slide-up relative w-full max-w-[520px] overflow-hidden rounded-t-[24px] bg-[var(--card-bg)] px-6 py-7 text-left shadow-[0_-10px_40px_rgba(0,0,0,0.15)] backdrop-blur-xl"
       >
         {renovationStatus === "reveal" && (
-          <div className="absolute inset-0 z-10 animate-fade-flash bg-white/80" />
+          <div className="absolute inset-0 z-10 animate-fade-flash bg-[var(--card-bg)]/80" />
         )}
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
               Property Performance
             </p>
-            <p className="mt-1 text-lg font-semibold text-slate-900">Parcel {parcel.id}</p>
+            <p className="mt-1 text-lg font-semibold text-[var(--text-primary)]">Parcel {parcel.id}</p>
           </div>
           <button
             type="button"
@@ -167,7 +167,7 @@ export default function PropertySheet() {
 
         {renovationStatus !== "idle" ? (
           <div className="mt-6 flex flex-col items-center justify-center py-10 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-700 shadow-inner">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--gray-surface)] text-[var(--text-primary)] shadow-inner">
               {renovationStatus === "demolish" && <HardHat className="h-8 w-8" />}
               {renovationStatus === "build" && <Wrench className="h-8 w-8" />}
               {renovationStatus === "reveal" && <Shield className="h-8 w-8" />}
@@ -198,13 +198,13 @@ export default function PropertySheet() {
           </p>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-slate-200/80 bg-slate-50/80 px-4 py-3 text-sm text-slate-600">
+        <div className="mt-4 rounded-2xl border border-slate-200/80 bg-[var(--gray-surface)]/80 px-4 py-3 text-sm text-slate-600">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
                 Property Boost
               </p>
-              <p className="mt-1 text-xs font-semibold text-slate-700">
+              <p className="mt-1 text-xs font-semibold text-[var(--text-primary)]">
                 {isBoostActive
                   ? `Active (${boostMultiplier}x)`
                   : `Inactive (${boostMultiplier}x)`}
@@ -217,7 +217,7 @@ export default function PropertySheet() {
               className={`rounded-full px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] ${
                 isBoostActive
                   ? "cursor-not-allowed bg-[#39FF14]/20 text-[#39FF14]"
-                  : "bg-[#39FF14] text-slate-900 shadow-[0_8px_20px_rgba(57,255,20,0.35)]"
+                  : "bg-[#39FF14] text-[var(--text-primary)] shadow-[0_8px_20px_rgba(57,255,20,0.35)]"
               }`}
             >
               {isBoostActive ? "Boosted" : "Boost"}
@@ -230,7 +230,7 @@ export default function PropertySheet() {
           )}
         </div>
 
-        <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-4">
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-[var(--card-bg)] px-4 py-4">
           <svg viewBox="0 0 120 40" className="h-16 w-full text-emerald-300">
             <path
               d="M2 32 L18 28 L30 30 L48 20 L62 18 L78 12 L98 8 L118 6"
@@ -241,25 +241,25 @@ export default function PropertySheet() {
           </svg>
         </div>
 
-        <div className="mt-5 rounded-2xl border border-slate-200/80 bg-slate-50/80 px-4 py-4 text-sm text-slate-600">
+        <div className="mt-5 rounded-2xl border border-slate-200/80 bg-[var(--gray-surface)]/80 px-4 py-4 text-sm text-slate-600">
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
             Renovation
           </p>
           <div className="mt-3 flex items-center justify-between">
             <span>Current Tier</span>
-            <span className="font-semibold text-slate-800">
+            <span className="font-semibold text-[var(--text-primary)]">
               {currentRarity.label} ({currentRarity.multiplier})
             </span>
           </div>
           <div className="mt-2 flex items-center justify-between">
             <span>Upgrade Offer</span>
-            <span className="font-semibold text-slate-800">
+            <span className="font-semibold text-[var(--text-primary)]">
               {nextRarity ? `${nextRarity.label} (${nextRarity.multiplier})` : "Maxed"}
             </span>
           </div>
           <div className="mt-3 flex items-center justify-between border-t border-slate-200 pt-3">
             <span>Cost</span>
-            <span className="flex items-center gap-3 text-xs font-semibold text-slate-800">
+            <span className="flex items-center gap-3 text-xs font-semibold text-[var(--text-primary)]">
               <span className="flex items-center gap-1">
                 <Landmark className="h-4 w-4 text-amber-500" />
                 250
@@ -275,7 +275,7 @@ export default function PropertySheet() {
             type="button"
             onClick={handleUpgrade}
             disabled={!canUpgrade}
-            className="mt-4 w-full rounded-full bg-[#1F2937] px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-white shadow-lg disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:opacity-100"
+            className="mt-4 w-full rounded-full bg-[var(--gray-bg)] px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-primary)] shadow-lg disabled:cursor-not-allowed disabled:bg-[var(--gray-surface)] disabled:text-[var(--text-muted)] disabled:opacity-100"
           >
             Renovate (250 Bucks + 1 Permit)
           </button>
@@ -287,7 +287,7 @@ export default function PropertySheet() {
           <button
             type="button"
             onClick={handleClose}
-            className="mt-3 w-full rounded-full bg-slate-100 px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-700"
+            className="mt-3 w-full rounded-full bg-[var(--gray-surface)] px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-primary)]"
           >
             Close
           </button>
@@ -301,7 +301,7 @@ export default function PropertySheet() {
         )}
         {toastMessage && (
           <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
-            <div className="rounded-full bg-[#39FF14] px-5 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-900 shadow-[0_12px_30px_rgba(57,255,20,0.35)]">
+            <div className="rounded-full bg-[#39FF14] px-5 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-primary)] shadow-[0_12px_30px_rgba(57,255,20,0.35)]">
               {toastMessage}
             </div>
           </div>

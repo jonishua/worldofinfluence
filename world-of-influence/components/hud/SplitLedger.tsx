@@ -145,8 +145,8 @@ export default function SplitLedger({ onOpenProfile }: SplitLedgerProps) {
       <div className="pointer-events-none fixed left-0 right-0 top-6 z-50 flex flex-col items-center">
         <div className="w-full max-w-[860px] px-4">
           <div
-            className={`pointer-events-auto relative flex items-stretch gap-4 rounded-[24px] border border-white/70 bg-white/95 p-3 shadow-2xl backdrop-blur-xl transition-all ${
-              isBoostActive ? "ring-2 ring-[#39FF14]/40 shadow-[0_0_30px_-5px_#39FF14]" : ""
+            className={`pointer-events-auto relative flex items-stretch gap-4 rounded-[24px] border border-[var(--card-border)] bg-[var(--card-bg)]/95 p-3 shadow-2xl backdrop-blur-xl transition-all ${
+              isBoostActive ? "ring-2 ring-[var(--accent-color)]/40" : ""
             }`}
           >
             <button
@@ -154,20 +154,20 @@ export default function SplitLedger({ onOpenProfile }: SplitLedgerProps) {
               onClick={() => onOpenProfile?.()}
               className="relative flex-shrink-0 group"
             >
-              <div className="h-16 w-16 overflow-hidden rounded-[18px] border-2 border-slate-100 shadow-sm transition group-hover:border-[var(--accent-color)]">
+              <div className="h-16 w-16 overflow-hidden rounded-[18px] border-2 border-[var(--card-border)] shadow-sm transition group-hover:border-[var(--accent-color)]">
                 <img
                   src={playerAvatar}
                   alt={`${playerName} avatar`}
                   className="h-full w-full object-cover"
                 />
               </div>
-              <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-2 border-white bg-emerald-500 shadow-sm" />
+              <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-2 border-[var(--card-bg)] bg-emerald-500 shadow-sm" />
             </button>
 
             <div className="flex flex-1 flex-col justify-between py-0.5">
               <div className="flex items-center justify-between">
                 <div className="flex flex-col">
-                  <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400">
+                  <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)]">
                     Pending Yield
                   </span>
                   <div className="flex items-baseline gap-2">
@@ -175,9 +175,9 @@ export default function SplitLedger({ onOpenProfile }: SplitLedgerProps) {
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-3 bg-slate-100/50 rounded-xl px-3 py-1.5 border border-slate-200/50">
+                <div className="flex items-center gap-3 bg-[var(--gray-surface)]/50 rounded-xl px-3 py-1.5 border border-[var(--card-border)]">
                   <div className="flex flex-col items-end">
-                    <span className="text-[8px] font-bold uppercase tracking-widest text-slate-400 leading-none">Status</span>
+                    <span className="text-[8px] font-bold uppercase tracking-widest text-[var(--text-muted)] leading-none">Status</span>
                     <AnimatePresence mode="wait">
                       {isBoostActive ? (
                         <motion.span
@@ -195,7 +195,7 @@ export default function SplitLedger({ onOpenProfile }: SplitLedgerProps) {
                           initial={{ opacity: 0, y: 5 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -5 }}
-                          className="font-mono text-[10px] font-bold text-slate-400 leading-none mt-1"
+                          className="font-mono text-[10px] font-bold text-[var(--text-muted)] leading-none mt-1"
                         >
                           READY
                         </motion.span>
@@ -209,37 +209,37 @@ export default function SplitLedger({ onOpenProfile }: SplitLedgerProps) {
                     transition={{ duration: 1.5, repeat: isBoostActive ? Infinity : 0 }}
                     className={`flex h-10 w-10 items-center justify-center rounded-lg transition-all ${
                       isBoostActive
-                        ? "bg-[#39FF14] text-slate-900 shadow-[0_0_15px_rgba(57,255,20,0.4)]"
-                        : "bg-slate-200 text-slate-500 hover:bg-slate-300"
+                        ? "bg-[var(--accent-color)] text-[var(--text-primary)] shadow-[0_0_15px_rgba(57,255,20,0.4)]"
+                        : "bg-[var(--gray-surface)] text-[var(--text-muted)] hover:bg-[var(--gray-bg)]"
                     }`}
                   >
-                    <Zap className={`h-5 w-5 ${isBoostActive ? "fill-slate-900" : ""}`} />
+                    <Zap className={`h-5 w-5 ${isBoostActive ? "fill-[var(--text-primary)]" : ""}`} />
                   </motion.button>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between border-t border-slate-100 pt-2 mt-1">
+              <div className="flex items-center justify-between border-t border-[var(--card-border)] pt-2 mt-1">
                 <div className="flex items-center gap-2" title="Credits">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-100">
-                    <Coins className="h-3.5 w-3.5 text-slate-400" />
+                  <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--gray-surface)]">
+                    <Coins className="h-3.5 w-3.5 text-[var(--text-muted)]" />
                   </div>
-                  <span className="font-mono text-[11px] font-bold text-slate-600 tabular-nums">{formattedCredits}</span>
+                  <span className="font-mono text-[11px] font-bold text-[var(--text-primary)] tabular-nums">{formattedCredits}</span>
                 </div>
                 <div className="flex items-center gap-2" title="Influence Bucks">
                   <div className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-50">
                     <Landmark className="h-3.5 w-3.5 text-amber-500" />
                   </div>
-                  <span className="font-mono text-[11px] font-bold text-slate-600 tabular-nums">{formattedBucks}</span>
+                  <span className="font-mono text-[11px] font-bold text-[var(--text-primary)] tabular-nums">{formattedBucks}</span>
                 </div>
                 <div className="flex items-center gap-2" title="Zoning Permits">
                   <div className="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-50">
                     <FileText className="h-3.5 w-3.5 text-emerald-500" />
                   </div>
-                  <span className="font-mono text-[11px] font-bold text-slate-600 tabular-nums">{formattedPermits}</span>
+                  <span className="font-mono text-[11px] font-bold text-[var(--text-primary)] tabular-nums">{formattedPermits}</span>
                 </div>
                 <button 
                   onClick={() => setIsWalletOpen(true)}
-                  className="flex items-center gap-2 border-l border-slate-100 pl-4 hover:opacity-70 transition-opacity"
+                  className="flex items-center gap-2 border-l border-[var(--card-border)] pl-4 hover:opacity-70 transition-opacity"
                 >
                   <div className="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-100/50">
                     <Lock className="h-3.5 w-3.5 text-emerald-600" />
@@ -261,7 +261,7 @@ export default function SplitLedger({ onOpenProfile }: SplitLedgerProps) {
                 borderColor: isTickerVisible ? "rgba(0, 200, 5, 0.3)" : "rgba(15, 23, 42, 0.15)",
               }}
               transition={{ type: "spring", damping: 25, stiffness: 150 }}
-              className={`pointer-events-auto relative flex h-10 items-center overflow-hidden rounded-full border bg-slate-950/90 shadow-2xl backdrop-blur-xl transition-shadow ${
+              className={`pointer-events-auto relative flex h-10 items-center overflow-hidden rounded-full border border-[var(--card-border)] bg-[var(--gray-bg)]/90 shadow-2xl backdrop-blur-xl transition-shadow ${
                 isTickerVisible ? "shadow-[0_0_20px_-5px_rgba(0,200,5,0.2)]" : "shadow-lg"
               }`}
             >
@@ -269,7 +269,7 @@ export default function SplitLedger({ onOpenProfile }: SplitLedgerProps) {
                 type="button"
                 onClick={() => setTickerVisible(!isTickerVisible)}
                 className={`flex h-10 w-10 flex-shrink-0 items-center justify-center transition-all active:scale-90 ${
-                  isTickerVisible ? "text-[var(--accent-color)]" : "text-slate-400 hover:text-slate-200"
+                  isTickerVisible ? "text-[var(--accent-color)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                 }`}
                 aria-label={isTickerVisible ? "Hide News Feed" : "Show News Feed"}
               >
@@ -286,10 +286,10 @@ export default function SplitLedger({ onOpenProfile }: SplitLedgerProps) {
                     className="flex-1 overflow-hidden pr-4"
                   >
                     <div className="feed-ticker__track py-1">
-                      <span className="feed-ticker__content text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-100 whitespace-nowrap">
+                      <span className="feed-ticker__content text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--gray-text)] whitespace-nowrap">
                         {tickerText}
                       </span>
-                      <span className="feed-ticker__content text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-100 whitespace-nowrap" aria-hidden="true">
+                      <span className="feed-ticker__content text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--gray-text)] whitespace-nowrap" aria-hidden="true">
                         {tickerText}
                       </span>
                     </div>
@@ -315,9 +315,9 @@ export default function SplitLedger({ onOpenProfile }: SplitLedgerProps) {
       )}
 
       {isAdLoading && (
-        <div className="fixed inset-0 z-[800] flex items-center justify-center bg-black/70 px-6 text-center text-white">
-          <div className="rounded-2xl border border-white/10 bg-slate-900/80 px-6 py-5 shadow-xl backdrop-blur">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300">
+        <div className="fixed inset-0 z-[800] flex items-center justify-center bg-black/70 px-6 text-center text-[var(--text-primary)]">
+          <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]/80 px-6 py-5 shadow-xl backdrop-blur">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
               Ad Boost
             </p>
             <p className="mt-2 text-sm font-semibold">{adMessage}</p>
@@ -327,20 +327,20 @@ export default function SplitLedger({ onOpenProfile }: SplitLedgerProps) {
 
       {isWalletOpen && (
         <div className="fixed inset-0 z-[700] flex items-end justify-center bg-black/40 px-4 pb-6 pt-10 backdrop-blur-[2px]">
-          <div className="w-full max-w-[520px] rounded-[20px] bg-white px-6 py-6 text-left shadow-[0_-10px_40px_rgba(0,0,0,0.2)]">
+          <div className="w-full max-w-[520px] rounded-[20px] bg-[var(--card-bg)] px-6 py-6 text-left shadow-[0_-10px_40px_rgba(0,0,0,0.15)]">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
                 Wallet
               </p>
               <button
                 type="button"
                 onClick={() => setIsWalletOpen(false)}
-                className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500"
+                className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]"
               >
                 Close
               </button>
             </div>
-            <p className="mt-4 text-sm text-slate-600">
+            <p className="mt-4 text-sm text-[var(--text-primary)]">
               Cash out options will appear here.
             </p>
           </div>

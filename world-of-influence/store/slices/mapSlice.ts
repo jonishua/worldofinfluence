@@ -83,7 +83,7 @@ export const createMapSlice: StateCreator<GameState, [], [], MapSlice> = (set, g
   globalDrops: [],
   lastDropSpawnTime: 0,
   selectedParcel: null,
-  mapZoom: 17,
+  mapZoom: 19,
   minMapZoom: 17,
   maxMapZoom: 21,
   satelliteMode: false,

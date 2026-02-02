@@ -127,25 +127,25 @@ export default function IncomeDetailModal({
 
   return (
     <div className="fixed inset-0 z-[700] flex items-end justify-center bg-black/40 px-4 pb-0 pt-0 backdrop-blur-[2px]">
-      <div className="slide-up w-full max-w-[520px] rounded-t-[24px] bg-white px-6 py-7 text-left shadow-[0_-10px_40px_rgba(0,0,0,0.2)]">
+      <div className="slide-up w-full max-w-[520px] rounded-t-[24px] bg-[var(--card-bg)] px-6 py-7 text-left shadow-[0_-10px_40px_rgba(0,0,0,0.15)] backdrop-blur-xl">
         <div className="flex items-center justify-between">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
             Current Yield Velocity
           </p>
           <button
             type="button"
             onClick={onClose}
-            className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500"
+            className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]"
           >
             Close
           </button>
         </div>
 
         <div className="mt-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
             Yield Rate
           </p>
-          <p className="mt-1 font-mono text-2xl font-semibold text-slate-800">
+          <p className="mt-1 font-mono text-2xl font-semibold text-[var(--text-primary)] tabular-nums">
             ${totalRate.toFixed(9)}/sec
           </p>
         </div>
@@ -154,13 +154,13 @@ export default function IncomeDetailModal({
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
             Pending Escrow
           </p>
-          <p className="mt-1 font-mono text-2xl font-semibold text-[#00C805]">
+          <p className="mt-1 font-mono text-2xl font-semibold text-[var(--accent-color)] tabular-nums">
             ${pendingAmount.toFixed(12)}
           </p>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-slate-200/70 bg-slate-50/80 px-4 py-4 text-sm text-slate-600">
-          <div className="flex items-center justify-between border-b border-slate-200/70 pb-3 text-xs uppercase tracking-[0.18em] text-slate-500">
+        <div className="mt-4 rounded-2xl border border-[var(--card-border)] bg-[var(--gray-surface)]/80 px-4 py-4 text-sm text-[var(--text-primary)]">
+          <div className="flex items-center justify-between border-b border-[var(--card-border)] pb-3 text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">
             <span>
               Ad Boost: {isBoostActive ? `ACTIVE (${boostMultiplier}x) ⚡` : "Inactive (1x)"}
             </span>
@@ -175,7 +175,7 @@ export default function IncomeDetailModal({
               <button
                 type="button"
                 onClick={extendBoost}
-                className="w-full rounded-full bg-slate-200 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-700"
+                className="w-full rounded-full bg-[var(--gray-surface)] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-primary)]"
               >
                 Extend (+1 Hr)
               </button>
@@ -183,7 +183,7 @@ export default function IncomeDetailModal({
               <button
                 type="button"
                 onClick={onRequestBoost}
-                className="w-full rounded-full bg-[#00C805] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-white"
+                className="w-full rounded-full bg-[var(--accent-color)] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-white"
               >
             {`Watch Ad (${boostMultiplier}x Multiplier)`}
               </button>
@@ -199,11 +199,11 @@ export default function IncomeDetailModal({
               <span className="font-semibold">+{(boostMultiplier - 1) * 100}%</span>
             </div>
           )}
-          <div className="mt-2 flex items-center justify-between text-slate-500">
+          <div className="mt-2 flex items-center justify-between text-[var(--text-muted)]">
             <span>Badge Bonus</span>
             <span className="font-semibold">+0%</span>
           </div>
-          <div className="mt-3 flex items-center justify-between border-t border-slate-200 pt-3 text-slate-800">
+          <div className="mt-3 flex items-center justify-between border-t border-[var(--card-border)] pt-3 text-[var(--text-primary)]">
             <span className="font-semibold">Total Output</span>
             <span className="font-mono tabular-nums">${totalRate.toFixed(9)}/sec</span>
           </div>
@@ -224,7 +224,7 @@ export default function IncomeDetailModal({
           <button
             type="button"
             onClick={handleSettle}
-            className="w-full rounded-full bg-[#1F2937] px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white shadow-lg"
+            className="w-full rounded-full bg-[var(--gray-bg)] px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-[var(--text-primary)] shadow-lg"
           >
             Settle to Wallet
           </button>
@@ -238,7 +238,7 @@ export default function IncomeDetailModal({
               20% Bonus
             </span>
           </button>
-          <p className="text-center text-[10px] uppercase tracking-[0.2em] text-slate-400">
+          <p className="text-center text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">
             Cost: $1.00 Rent
           </p>
         </div>
@@ -246,7 +246,7 @@ export default function IncomeDetailModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-full rounded-full bg-slate-100 px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-slate-700"
+            className="w-full rounded-full bg-[var(--gray-surface)] px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-[var(--text-primary)]"
           >
             Close
           </button>

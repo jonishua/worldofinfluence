@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import BottomNav from "@/components/BottomNav";
+import TopNav from "@/components/TopNav";
 import GameMapClient from "@/components/GameMapClient";
 import PropertySheet from "@/components/PropertySheet";
 import PurchaseModal from "@/components/PurchaseModal";
@@ -31,6 +32,7 @@ export default function Home() {
     <ThemeProvider>
       <div className="relative h-screen w-screen overflow-hidden bg-[var(--bg-color)] text-[var(--text-primary)]">
         <GameMapClient />
+        <TopNav />
         <SatelliteOverlay />
         <SatelliteSearchBar />
         <DeploymentSlider />

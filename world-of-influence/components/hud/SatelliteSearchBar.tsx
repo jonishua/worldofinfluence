@@ -95,7 +95,7 @@ export default function SatelliteSearchBar() {
           transition={{ type: "spring", damping: 25, stiffness: 120 }}
           className="absolute left-1/2 top-[124px] z-[45] w-[calc(100%-64px)] max-w-md -translate-x-1/2"
         >
-          <div className="flex flex-col gap-2 rounded-b-[20px] border-x border-b border-orange-500/20 bg-slate-900/95 p-3 pb-4 shadow-[0_30px_60px_rgba(0,0,0,0.6)] backdrop-blur-xl pt-12">
+          <div className="flex flex-col gap-2 rounded-b-[20px] border-x border-b border-orange-500/20 bg-[var(--card-bg)]/95 p-3 pb-4 shadow-[0_30px_60px_rgba(0,0,0,0.6)] backdrop-blur-xl pt-12">
             <div className="flex items-center gap-3">
               <div className="flex flex-1 items-center gap-2 rounded-xl bg-slate-800/60 px-3 py-2 border border-white/5">
                 <Search className="h-4 w-4 text-slate-400" />
@@ -105,7 +105,7 @@ export default function SatelliteSearchBar() {
                   onChange={(e) => setSearchValue(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Enter city, zip, or coordinates..." 
-                  className="w-full bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-500"
+                  className="w-full bg-transparent text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"
                 />
                 {searchValue && !isLoading && (
                   <button onClick={() => setSearchValue("")} className="p-1 hover:text-white text-slate-500 transition-colors">
@@ -119,7 +119,7 @@ export default function SatelliteSearchBar() {
               <button 
                 onClick={handleSearch}
                 disabled={!searchValue.trim() || uplinkCharges === 0 || isLoading}
-                className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500 text-white shadow-lg shadow-orange-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:grayscale disabled:scale-100"
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500 text-[var(--text-primary)] shadow-lg shadow-orange-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:grayscale disabled:scale-100"
               >
                 {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowRight className="h-5 w-5" />}
               </button>
@@ -135,7 +135,7 @@ export default function SatelliteSearchBar() {
                       className={`h-1.5 w-8 rounded-full transition-all duration-500 ${
                         i < uplinkCharges 
                           ? "bg-orange-500 shadow-[0_0_10px_rgba(245,158,11,0.6)]" 
-                          : "bg-slate-800"
+                          : "bg-[var(--gray-bg)]"
                       }`}
                     />
                   ))}

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-import { themeById, useThemeStore } from "@/lib/theme";
+import { getStoredThemeId, themeById, useThemeStore } from "@/lib/theme";
 
 type ThemeProviderProps = {
   children: React.ReactNode;
@@ -10,6 +10,14 @@ type ThemeProviderProps = {
 
 export default function ThemeProvider({ children }: ThemeProviderProps) {
   const currentThemeId = useThemeStore((state) => state.currentThemeId);
+  const setTheme = useThemeStore((state) => state.setTheme);
+
+  useEffect(() => {
+    const stored = getStoredThemeId();
+    setTheme(stored);
+    // Run once on mount to hydrate from localStorage
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const theme = themeById[currentThemeId];

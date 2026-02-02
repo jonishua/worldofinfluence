@@ -30,18 +30,18 @@ export default function WalletPill({ onClick, pulseId }: WalletPillProps) {
     <button
       type="button"
       onClick={onClick}
-      className={`pointer-events-auto flex items-center gap-3 rounded-full border border-transparent bg-[#1F2937] px-5 py-3 text-left shadow-lg ${
+      className={`pointer-events-auto flex items-center gap-3 rounded-full border border-[var(--card-border)] bg-[var(--card-bg)] px-5 py-3 text-left shadow-lg backdrop-blur-xl ${
         isPulsing ? "wallet-pulse" : ""
       }`}
     >
-      <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10">
-        <Lock className="h-4 w-4 text-white" />
+      <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--card-border)] bg-[var(--gray-surface)]/50">
+        <Lock className="h-4 w-4 text-[var(--text-primary)]" />
       </div>
       <div>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
           Secured Wallet
         </p>
-        <p className="mt-1 text-lg font-semibold text-white">
+        <p className="mt-1 text-lg font-semibold font-mono tabular-nums text-[var(--text-primary)]">
           ${walletBalance.toFixed(12)}
         </p>
       </div>

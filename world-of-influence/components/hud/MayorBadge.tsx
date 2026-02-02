@@ -15,16 +15,16 @@ export default function MayorBadge() {
       <button
         type="button"
         onClick={() => setLeaderboardOpen(true)}
-        className="pointer-events-auto rounded-[16px] border border-white/70 bg-white/95 px-4 py-2 text-left shadow-xl backdrop-blur"
+        className="pointer-events-auto rounded-[16px] border border-[var(--card-border)] bg-[var(--card-bg)]/95 px-4 py-2 text-left shadow-xl backdrop-blur-xl"
       >
-        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
           {mayorStatus.title}
         </p>
-        <p className="mt-1 text-sm font-semibold text-slate-900">
+        <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
           {mayorStatus.name}
         </p>
         <div className="mt-1 flex items-center justify-between gap-4">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
             {mayorStatus.region}
           </span>
           <span className="font-mono text-[11px] font-semibold text-[var(--accent-color)] tabular-nums">

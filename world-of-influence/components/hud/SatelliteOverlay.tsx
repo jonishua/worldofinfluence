@@ -1,6 +1,11 @@
 "use client";
 
-import { useMapStore, calculateDistance, DRONE_TETHER_RADIUS_KM } from "@/store/useGameStore";
+import { 
+  useMapStore, 
+  calculateDistance, 
+  DRONE_TETHER_RADIUS_KM,
+  DRONE_SESSION_DURATION_SEC 
+} from "@/store/useGameStore";
 import { motion, AnimatePresence } from "framer-motion";
 import { Battery, Power, Signal, Zap, Crosshair, Loader2 } from "lucide-react";
 import { useMemo } from "react";
@@ -20,7 +25,7 @@ export default function SatelliteOverlay() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const batteryPercent = (droneTimer / 600) * 100; // Assuming 600s total
+  const batteryPercent = (droneTimer / DRONE_SESSION_DURATION_SEC) * 100;
 
   const signalStrength = useMemo(() => {
     if (!userLocation || !satelliteCameraLocation) return 100;
@@ -52,7 +57,7 @@ export default function SatelliteOverlay() {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: -100, opacity: 0 }}
               transition={{ type: "spring", damping: 25, stiffness: 120 }}
-              className="flex w-full max-w-md flex-col overflow-hidden rounded-b-[20px] border-x border-b border-cyan-500/20 bg-slate-950/90 shadow-[0_30px_60px_rgba(0,0,0,0.8)] backdrop-blur-xl"
+              className="flex w-full max-w-md flex-col overflow-hidden rounded-b-[20px] border-x border-b border-cyan-500/20 bg-[var(--gray-bg)]/90 shadow-[0_30px_60px_rgba(0,0,0,0.8)] backdrop-blur-xl"
             >
               <div className="flex items-center justify-between p-4 pb-3">
                 <div className="flex items-center gap-3">
@@ -66,30 +71,42 @@ export default function SatelliteOverlay() {
                     )}
                   </div>
                   <div>
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Drone Status</div>
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
+                      {droneStatus === 'active' ? `Ends in ${formatTime(droneTimer)}` : 'Drone Status'}
+                    </div>
                     <div className={`font-mono text-sm font-bold uppercase tracking-wider ${droneStatus === 'active' ? 'text-cyan-400' : 'text-orange-400'}`}>
                       {statusLabel}
                     </div>
                   </div>
                 </div>
 
-                <div className="h-10 w-[1px] bg-slate-800" />
+                <div className="h-10 w-[1px] bg-[var(--card-border)]" />
 
                 <div className="flex items-center gap-3">
                   <div className="text-right">
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Signal</div>
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Signal</div>
                     <div className="flex items-center justify-end gap-1 font-mono text-xl font-bold text-cyan-400">
                       {signalStrength}% <Signal className="h-4 w-4" />
                     </div>
                   </div>
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-400">
-                    <div className={`h-2.5 w-2.5 rounded-full bg-cyan-400 ${signalStrength > 20 ? 'animate-pulse' : 'bg-rose-500'}`} />
-                  </div>
+                  {droneStatus === "active" ? (
+                    <button
+                      onClick={cancelDrone}
+                      className="flex h-10 w-10 items-center justify-center rounded-lg bg-rose-500/20 text-rose-500 transition-all hover:bg-rose-500 hover:text-[var(--text-primary)] active:scale-95 pointer-events-auto"
+                      title="Terminate Uplink"
+                    >
+                      <Power className="h-5 w-5" />
+                    </button>
+                  ) : (
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-400">
+                      <div className={`h-2.5 w-2.5 rounded-full bg-cyan-400 ${signalStrength > 20 ? 'animate-pulse' : 'bg-rose-500'}`} />
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Status Specific Progress/Info */}
-              <div className="h-1.5 w-full bg-slate-800/50">
+              <div className="h-1.5 w-full bg-[var(--gray-surface)]/50">
                 {droneStatus === "active" ? (
                   <motion.div 
                     className={`h-full transition-colors duration-500 ${droneTimer < 60 ? 'bg-rose-500' : 'bg-cyan-500'}`}
@@ -107,40 +124,7 @@ export default function SatelliteOverlay() {
                 ) : null}
               </div>
             </motion.div>
-
-            {/* Tactical Status Pill - Floating below */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="mt-4 flex items-center gap-2 rounded-full border border-cyan-500/20 bg-slate-950/80 px-4 py-1.5 backdrop-blur-md"
-            >
-              <Zap className="h-3 w-3 text-cyan-400 animate-pulse" />
-              <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-cyan-300">
-                {droneStatus === 'active' ? `Session Ends in ${formatTime(droneTimer)}` : 'Remote Uplink Established'}
-              </span>
-            </motion.div>
           </div>
-
-          {/* Bottom Controls - Terminate */}
-          {droneStatus === "active" && (
-            <div className="pointer-events-none absolute inset-x-0 bottom-28 z-[45] flex justify-center px-6">
-              <motion.div
-                initial={{ y: 50, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 50, opacity: 0 }}
-                className="pointer-events-auto"
-              >
-                <button
-                  onClick={cancelDrone}
-                  className="group flex items-center gap-2.5 rounded-xl border border-rose-500/30 bg-slate-950/90 px-6 py-2.5 text-rose-500 shadow-2xl transition-all hover:bg-rose-500 hover:text-white active:scale-95"
-                >
-                  <Power className="h-4 w-4" />
-                  <span className="text-xs font-bold uppercase tracking-[0.2em]">Terminate Uplink</span>
-                </button>
-              </motion.div>
-            </div>
-          )}
 
           {/* CRT Blink/Power-on effect */}
           <motion.div
@@ -150,7 +134,7 @@ export default function SatelliteOverlay() {
               opacity: [0, 0.8, 0, 0.5, 0, 0],
               transition: { duration: 0.4, times: [0, 0.1, 0.2, 0.3, 0.4, 0.5] }
             }}
-            className="pointer-events-none absolute inset-0 z-[6] bg-white/20"
+            className="pointer-events-none absolute inset-0 z-[6] bg-[var(--card-bg)]/20"
           />
 
           {/* Deep Navy Blueprint Tint */}
