@@ -4,6 +4,7 @@ import confetti from "canvas-confetti";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { FormattedIB } from "@/components/hud/IBIcon";
 import { 
   useEconomyStore, 
   useMapStore, 
@@ -271,16 +272,16 @@ export default function PurchaseModal() {
               {isDroneView ? "Remote Acquisition" : "Acquire Parcel?"}
             </p>
             <div className="mt-4 space-y-2 rounded-xl bg-[var(--gray-surface)]/50 p-4">
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-sm items-center">
                 <span className="text-[var(--text-muted)]">Base Land Value</span>
-                <span className="font-mono font-bold">{PURCHASE_COST} IB</span>
+                <FormattedIB amount={PURCHASE_COST} className="font-bold" />
               </div>
               
               {isDroneView && (
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-sm items-center">
                   <span className="text-[var(--text-muted)]">Remote Filing Fee</span>
-                  <span className={`font-mono font-bold ${isSubscriber ? 'text-[#00C805]' : 'text-rose-500'}`}>
-                    {isSubscriber ? '-0 IB' : `+${remoteFee} IB`}
+                  <span className={isSubscriber ? 'text-[#00C805]' : 'text-rose-500'}>
+                    <FormattedIB amount={isSubscriber ? 0 : remoteFee} signed className="font-bold" />
                   </span>
                 </div>
               )}
@@ -293,9 +294,9 @@ export default function PurchaseModal() {
               )}
 
               <div className="border-t border-[var(--card-border)] pt-2">
-                <div className="flex justify-between text-base font-bold">
+                <div className="flex justify-between text-base font-bold items-center">
                   <span>Total Cost</span>
-                  <span className="font-mono text-[var(--accent-color)]">{totalCost} IB</span>
+                  <FormattedIB amount={totalCost} className="text-[var(--accent-color)] font-bold" />
                 </div>
               </div>
             </div>

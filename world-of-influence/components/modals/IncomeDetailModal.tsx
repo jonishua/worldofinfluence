@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { FormattedIB } from "@/components/hud/IBIcon";
 import {
   computeBaseRentRate,
   computeRentRate,
@@ -233,7 +234,9 @@ export default function IncomeDetailModal({
             onClick={handleReinvest}
             className="flex w-full items-center justify-between rounded-full border border-emerald-500/50 bg-emerald-500/10 px-4 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700"
           >
-            <span>Reinvest: Buy 25 Influence Bucks</span>
+            <span className="inline-flex items-center gap-1 flex-wrap">
+              Reinvest: Buy <FormattedIB amount={25} className="font-semibold" />
+            </span>
             <span className="rounded-full bg-emerald-500/20 px-2 py-1 text-[10px] font-semibold text-emerald-700">
               20% Bonus
             </span>

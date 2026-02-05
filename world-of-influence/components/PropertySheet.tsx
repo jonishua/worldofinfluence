@@ -1,9 +1,10 @@
 "use client";
 
-import { FileText, HardHat, Landmark, Shield, Wrench } from "lucide-react";
+import { FileText, HardHat, Shield, Wrench } from "lucide-react";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { FormattedIB } from "@/components/hud/IBIcon";
 import { 
   getBoostMultiplier, 
   useEconomyStore, 
@@ -260,10 +261,7 @@ export default function PropertySheet() {
           <div className="mt-3 flex items-center justify-between border-t border-slate-200 pt-3">
             <span>Cost</span>
             <span className="flex items-center gap-3 text-xs font-semibold text-[var(--text-primary)]">
-              <span className="flex items-center gap-1">
-                <Landmark className="h-4 w-4 text-amber-500" />
-                250
-              </span>
+              <FormattedIB amount={250} className="text-xs font-semibold" />
               <span className="text-slate-400">+</span>
               <span className="flex items-center gap-1">
                 <FileText className="h-4 w-4 text-emerald-500" />
@@ -277,7 +275,9 @@ export default function PropertySheet() {
             disabled={!canUpgrade}
             className="mt-4 w-full rounded-full bg-[var(--gray-bg)] px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-primary)] shadow-lg disabled:cursor-not-allowed disabled:bg-[var(--gray-surface)] disabled:text-[var(--text-muted)] disabled:opacity-100"
           >
-            Renovate (250 Bucks + 1 Permit)
+            <span className="inline-flex items-center gap-1 flex-wrap justify-center">
+              Renovate (<FormattedIB amount={250} className="text-xs font-semibold" /> + 1 Permit)
+            </span>
           </button>
           {!canUpgrade && missingText && (
             <p className="mt-2 text-center text-[10px] uppercase tracking-[0.18em] text-rose-500">

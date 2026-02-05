@@ -10,7 +10,7 @@ A fintech strategy game where players move in the real world to capture opportun
 
 ## 3. Primary Systems
 - **Map & Location:** Leaflet-based map with desaturated tiles and local grid.
-- **Supply Drops:** Spawned markers around the player.
+- **Supply Drops:** Spawned markers around the player. Tier colors on the map: **Grey** = Common, **Blue** = Rare, **Purple** = Epic, **Orange/Gold** = Legendary (with glow).
 - **HUD:** Live balance odometer, boost indicator, parcel actions, and cloud sync status.
 - **Parcels:** Select, purchase, and visualize owned plots on the grid.
 - **Renovations:** Owned parcels can be upgraded with Influence Bucks + permits to increase rent and change rarity visuals.

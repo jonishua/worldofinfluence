@@ -3,6 +3,7 @@
 import { Building2 } from "lucide-react";
 
 import { useEconomyStore } from "@/store/useGameStore";
+import { IBIcon } from "./IBIcon";
 import Odometer from "./Odometer";
 
 export default function BucksPill() {
@@ -17,11 +18,13 @@ export default function BucksPill() {
         <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)] leading-none mb-1">
           Influence
         </span>
-        <Odometer 
-          value={influenceBucks} 
-          className="text-sm tabular-nums leading-none" 
-          prefix="IB "
-        />
+        <div className="flex items-center gap-1.5">
+          <IBIcon size={14} className="shrink-0 text-[var(--text-primary)]" />
+          <Odometer
+            value={influenceBucks}
+            className="text-sm tabular-nums leading-none"
+          />
+        </div>
       </div>
     </div>
   );

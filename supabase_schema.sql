@@ -91,6 +91,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- RLS for Global Drops
 ALTER TABLE public.global_drops ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Anyone can view uncollected global drops" ON public.global_drops FOR SELECT USING (collected_by IS NULL);
+CREATE POLICY "Authenticated users can insert global drops" ON public.global_drops FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
 CREATE POLICY "Authenticated users can trigger collection" ON public.global_drops FOR UPDATE USING (auth.uid() IS NOT NULL);
 
 -- RLS POLICIES (Row Level Security)

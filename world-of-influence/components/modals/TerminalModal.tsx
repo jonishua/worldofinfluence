@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, Play } from "lucide-react";
 import confetti from "canvas-confetti";
+import { IBIcon } from "@/components/hud/IBIcon";
 import { useEconomyStore, useGameStore } from "@/store/useGameStore";
 import { calculateSpinResult, getWinTierForResult } from "@/lib/slotsLogic";
 import type { SlotResult, WinTier } from "@/types/slots";
@@ -338,8 +339,11 @@ export default function TerminalModal({ isOpen, onClose }: TerminalModalProps) {
                     exit={{ scale: 0.6, opacity: 0, y: 10 }}
                     className="flex flex-col items-center justify-center text-center"
                   >
-                    <div className="font-mono text-3xl font-semibold tabular-nums text-[#00C805]">
+                    <div className="flex items-center justify-center gap-2 font-mono text-3xl font-semibold tabular-nums text-[#00C805]">
                       +{(spinResult.reward.amount * betMultiplier).toFixed(0)}
+                      {spinResult.reward.type === "InfluenceBucks" && (
+                        <IBIcon size={24} className="text-[#00C805]" />
+                      )}
                     </div>
                     <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/80">
                       {spinResult.reward.type === "InfluenceBucks"

@@ -1,9 +1,10 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Coins, FileText, Landmark } from "lucide-react";
+import { Coins, FileText } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+import { IBIcon } from "@/components/hud/IBIcon";
 import { useEconomyStore } from "@/store/useGameStore";
 
 const TICKER_INTERVAL_MS = 5000;
@@ -18,7 +19,7 @@ export default function AssetTicker() {
     () => [
       {
         key: "influence",
-        icon: Landmark,
+        icon: IBIcon,
         label: `${influenceBucks.toLocaleString()} Influence Bucks`,
       },
       {

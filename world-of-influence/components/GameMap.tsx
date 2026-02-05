@@ -30,6 +30,7 @@ import {
   DropRarity, 
   LatLng, 
   useMapStore, 
+  useGameStore,
   usePropertyStore,
   GlobalDrop,
   calculateDistance,
@@ -246,6 +247,7 @@ function MapFlyToHandler({
   const droneStatus = useMapStore((state) => state.droneStatus);
   const completeDeployment = useMapStore((state) => state.completeDeployment);
   const deploymentTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const deploymentPositionCheckRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const deploymentCompletedRef = useRef(false);
 
   // Lock map interaction during drone flight or active session
@@ -278,6 +280,7 @@ function MapFlyToHandler({
       if (isTargeting) zoom = 14;
 
       const target = [flyToTarget.lat, flyToTarget.lng] as [number, number];
+      const targetLatLng = { lat: flyToTarget.lat, lng: flyToTarget.lng };
       triggerMapFlyTo(null);
       deploymentCompletedRef.current = false;
       onTransitionStart();
@@ -288,38 +291,54 @@ function MapFlyToHandler({
         easeLinearity: isDeploying ? 0.1 : 0.25,
       });
 
-      const handleMoveEnd = () => {
+      const finishDeployment = () => {
+        if (deploymentCompletedRef.current) return;
+        deploymentCompletedRef.current = true;
         map.off('moveend', handleMoveEnd);
         if (deploymentTimerRef.current) {
           clearTimeout(deploymentTimerRef.current);
           deploymentTimerRef.current = null;
         }
-        if (deploymentCompletedRef.current) return;
-        deploymentCompletedRef.current = true;
+        if (deploymentPositionCheckRef.current) {
+          clearInterval(deploymentPositionCheckRef.current);
+          deploymentPositionCheckRef.current = null;
+        }
         if (isDeploying) {
           completeDeployment();
         }
         onTransitionEnd();
       };
+
+      const handleMoveEnd = () => finishDeployment();
       map.on('moveend', handleMoveEnd);
 
       if (isDeploying) {
         if (deploymentTimerRef.current) clearTimeout(deploymentTimerRef.current);
-        deploymentTimerRef.current = setTimeout(() => {
-          deploymentTimerRef.current = null;
-          if (deploymentCompletedRef.current) return;
-          deploymentCompletedRef.current = true;
-          completeDeployment();
-          onTransitionEnd();
-        }, Math.max(duration * 1000 + 500, 4500));
+        // Use 6s fallback: Leaflet flyTo moveend can be unreliable for long distance / backgrounded tabs
+        deploymentTimerRef.current = setTimeout(finishDeployment, 6000);
+
+        // Position-based fallback: complete when map center is close to target (robust against RAF throttling)
+        deploymentPositionCheckRef.current = setInterval(() => {
+          const center = map.getCenter();
+          const dist = calculateDistance(
+            { lat: center.lat, lng: center.lng },
+            targetLatLng
+          );
+          if (dist < 0.02) { // ~20m threshold - "arrived" at target
+            finishDeployment();
+          }
+        }, 250);
       }
     }
   }, [flyToTarget, map, triggerMapFlyTo, droneStatus, completeDeployment, onTransitionStart, onTransitionEnd]);
 
-  // Cleanup timer on unmount
+  // Cleanup timer on unmount - but NOT when deploying (let timer fire to prevent hang)
   useEffect(() => {
     return () => {
-      if (deploymentTimerRef.current) clearTimeout(deploymentTimerRef.current);
+      const status = useGameStore.getState().droneStatus;
+      if (status !== "deploying" && deploymentTimerRef.current) {
+        clearTimeout(deploymentTimerRef.current);
+      }
     };
   }, []);
 

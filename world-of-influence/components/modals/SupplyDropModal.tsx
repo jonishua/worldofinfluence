@@ -17,8 +17,8 @@ const RARITY_VISUALS: Record<
   },
   Rare: {
     label: "Secured Payload",
-    accent: "text-amber-600",
-    case: "text-amber-500",
+    accent: "text-blue-500",
+    case: "text-blue-500",
   },
   Epic: {
     label: "Priority Vault",
@@ -27,8 +27,8 @@ const RARITY_VISUALS: Record<
   },
   Legendary: {
     label: "Executive Vault",
-    accent: "text-yellow-400",
-    case: "text-yellow-400",
+    accent: "text-amber-400",
+    case: "text-amber-400",
     aura: "supply-glow",
   },
 };

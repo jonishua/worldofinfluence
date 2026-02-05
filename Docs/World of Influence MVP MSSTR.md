@@ -41,6 +41,11 @@ Theme: "The World is Your Portfolio"
   * **Rare (25%):** **Credits** (medium bundle).  
   * **Epic (10%):** **INK Cash** (small bundle).  
   * **Legendary (5%):** **"Zoning Permit"** (1–2 permits).  
+* **Supply Drop Tier Colors (Map Markers):**  
+  * **Grey** = Common drop  
+  * **Blue** = Rare drop  
+  * **Purple** = Epic drop  
+  * **Orange/Gold** = Legendary drop (with glow)  
 * **Psychology:** This replaces the predictable "Work" of walking with the exciting **"Gambling" of opening mystery boxes**, ensuring the "Action $\\rightarrow$ Variable Reward" step of the Hook Model is compelling.
 
 ## **2\. Land Acquisition Engine ("The Asset")**

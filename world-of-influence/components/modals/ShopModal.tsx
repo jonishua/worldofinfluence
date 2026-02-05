@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
 
+import { FormattedIB } from "@/components/hud/IBIcon";
 import { 
   useEconomyStore, 
   useGovernanceStore, 
@@ -167,12 +168,14 @@ const KeyAssetCard = ({
       </div>
 
       {/* Bottom: Price/Status */}
-      <div className={`w-full py-1.5 rounded-lg text-center ${
+      <div className={`w-full py-1.5 rounded-lg text-center flex items-center justify-center ${
         isOwned ? 'bg-white/20' : 'bg-[var(--gray-bg)]'
       }`}>
-        <span className={`text-[9px] font-black uppercase tracking-widest text-white`}>
-          {isOwned ? 'Owned' : `${price} IB`}
-        </span>
+        {isOwned ? (
+          <span className="text-[9px] font-black uppercase tracking-widest text-white">Owned</span>
+        ) : (
+          <FormattedIB amount={price} className="text-[9px] font-black uppercase tracking-widest text-white" />
+        )}
       </div>
     </button>
   );
@@ -417,8 +420,12 @@ const ProductCard = ({ product, onClick, icon: Icon = Landmark }: { product: Sho
         </p>
       </div>
     </div>
-    <div className="rounded-full bg-[#00C805] px-4 py-2 text-[10px] font-bold text-white shadow-[0_4px_12px_rgba(0,200,5,0.2)] transition-transform group-hover:scale-105 uppercase tracking-widest">
-      {product.price}
+    <div className="rounded-full bg-[#00C805] px-4 py-2 text-[10px] font-bold text-white shadow-[0_4px_12px_rgba(0,200,5,0.2)] transition-transform group-hover:scale-105 uppercase tracking-widest flex items-center justify-center">
+      {product.costInBucks != null ? (
+        <FormattedIB amount={product.costInBucks} className="text-white font-bold" />
+      ) : (
+        product.price
+      )}
     </div>
   </button>
 );
@@ -798,7 +805,11 @@ export default function ShopModal({ isOpen, onClose }: { isOpen: boolean; onClos
                                     <span className="flex items-center gap-1">
                                       <Clock className="h-2 w-2" /> Next Briefing: {Math.floor(cooldownSeconds / 60)}:{(cooldownSeconds % 60).toString().padStart(2, '0')}
                                     </span>
-                                  ) : "Watch Briefing • +5 IB Grant"}
+                                  ) : (
+                                    <span className="flex items-center gap-1 flex-wrap">
+                                      Watch Briefing • <FormattedIB amount={5} signed /> Grant
+                                    </span>
+                                  )}
                                 </p>
                               </div>
                             </div>

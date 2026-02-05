@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Lock, Zap, Newspaper, Coins, Landmark, FileText } from "lucide-react";
+import { Lock, Zap, Newspaper, Coins, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+import { IBIcon } from "@/components/hud/IBIcon";
 import PendingPill from "@/components/hud/PendingPill";
 import IncomeDetailModal from "@/components/modals/IncomeDetailModal";
 import { 
@@ -227,7 +228,7 @@ export default function SplitLedger({ onOpenProfile }: SplitLedgerProps) {
                 </div>
                 <div className="flex items-center gap-2" title="Influence Bucks">
                   <div className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-50">
-                    <Landmark className="h-3.5 w-3.5 text-amber-500" />
+                    <IBIcon size={14} className="text-amber-500" />
                   </div>
                   <span className="font-mono text-[11px] font-bold text-[var(--text-primary)] tabular-nums">{formattedBucks}</span>
                 </div>
