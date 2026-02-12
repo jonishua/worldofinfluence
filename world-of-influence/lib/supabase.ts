@@ -2,9 +2,15 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+/** True when real Supabase URL and anon key are set (not placeholder). Use to avoid "Failed to fetch" on auth. */
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey && !supabaseUrl.includes("placeholder"));
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn("Supabase environment variables are missing. Auth and persistence will not work.");
+if (typeof window !== "undefined") {
+  if (isSupabaseConfigured) {
+    console.info("[Supabase] Configured — local build is using your Supabase project.");
+  } else {
+    console.warn("[Supabase] Environment variables missing or placeholder. Auth and persistence will not work. See README → Local development.");
+  }
 }
 
 // We provide fallback values to prevent the build from crashing if environment variables are missing.

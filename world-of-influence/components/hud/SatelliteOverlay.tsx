@@ -45,9 +45,13 @@ export default function SatelliteOverlay() {
     active: "Tactical Scout Active",
   }[droneStatus];
 
+  // Only show slide-out when drone session is active (targeting, deploying, or active)
+  // Never show when idle ("System Offline") - that indicates stale/broken state
+  const showOverlay = satelliteMode && droneStatus !== "idle";
+
   return (
     <AnimatePresence>
-      {satelliteMode && (
+      {showOverlay && (
         <>
           {/* Tactical HUD Elements */}
           <div className="pointer-events-none absolute inset-0 z-[45] flex flex-col items-center p-4 pt-[132px]">

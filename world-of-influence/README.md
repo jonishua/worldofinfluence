@@ -1,5 +1,23 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Local development (Supabase)
+
+To run against Supabase so you see real auth, persistence, and real-time data locally:
+
+1. **Copy env example and add your keys**
+   ```bash
+   cp .env.local.example .env.local
+   ```
+   Edit `.env.local`: set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` from your [Supabase](https://supabase.com) project (Project Settings → API). Use the same project as production to iterate on real data.
+
+2. **Restart the dev server** after changing `.env.local` (Next.js inlines `NEXT_PUBLIC_*` at build time).
+
+3. **Confirm** in the browser console you see `[Supabase] Configured — local build is using your Supabase project.` If you see a warning instead, check `.env.local` and restart.
+
+4. **Forgot password:** Add your reset page to Supabase → Authentication → URL Configuration → Redirect URLs: `http://localhost:3000/auth/reset-password` (and your production URL, e.g. `https://your-app.vercel.app/auth/reset-password`).
+
+Optional: for Satellite/Drone location search, add `NEXT_PUBLIC_MAPBOX_TOKEN` to `.env.local`.
+
 ## Getting Started
 
 First, run the development server:

@@ -541,7 +541,9 @@ export default function GameMap() {
     return () => clearInterval(interval);
   }, [droneStatus, updateDroneTimer]);
 
-  // Drone interpolation during deployment
+  // Drone interpolation during deployment - throttled to ~10fps to prevent page freeze
+  // (60 store updates/sec was causing full GameMap re-renders and "Page Unresponsive")
+  const droneAnimRef = useRef<number | null>(null);
   useEffect(() => {
     if (droneStatus !== "deploying" || !userLocation || !droneTargetLocation) return;
     
@@ -549,23 +551,41 @@ export default function GameMap() {
     const end = droneTargetLocation;
     const startTime = performance.now();
     const duration = 4000; // Match flyTo duration
+    const throttleMs = 80; // ~12 fps - smooth enough, light on re-renders
+    let lastUpdateTime = 0;
+    let cancelled = false;
 
     const animate = (time: number) => {
-      const progress = Math.min((time - startTime) / duration, 1);
-      const eased = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2; // Ease in out
+      if (cancelled) return;
+      if (useGameStore.getState().droneStatus !== "deploying") return;
       
-      updateDroneLocation({
-        lat: start.lat + (end.lat - start.lat) * eased,
-        lng: start.lng + (end.lng - start.lng) * eased,
-      });
+      const progress = Math.min((time - startTime) / duration, 1);
+      const eased = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+      
+      // Throttle store updates - only push to Zustand at most every throttleMs
+      if (time - lastUpdateTime >= throttleMs || progress >= 1) {
+        lastUpdateTime = time;
+        updateDroneLocation({
+          lat: start.lat + (end.lat - start.lat) * eased,
+          lng: start.lng + (end.lng - start.lng) * eased,
+        });
+      }
 
       if (progress < 1) {
-        requestAnimationFrame(animate);
+        droneAnimRef.current = requestAnimationFrame(animate);
+      } else {
+        droneAnimRef.current = null;
       }
     };
 
-    const animId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animId);
+    droneAnimRef.current = requestAnimationFrame(animate);
+    return () => {
+      cancelled = true;
+      if (droneAnimRef.current != null) {
+        cancelAnimationFrame(droneAnimRef.current);
+        droneAnimRef.current = null;
+      }
+    };
   }, [droneStatus, userLocation, droneTargetLocation, updateDroneLocation]);
 
   const targetLocation = (satelliteMode && viewingMode === "drone" && droneStatus === "active" && droneTetherCenter)

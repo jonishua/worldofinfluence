@@ -34,6 +34,43 @@ export const useGameStore = create<GameState>()(
       onRehydrateStorage: () => (state) => {
         if (!state) return;
 
+        // Drone session validation: only show slide-out if timer still active
+        const now = Date.now();
+        const persistedDroneStatus = state.droneStatus as "idle" | "targeting" | "deploying" | "active" | undefined;
+        const persistedExpiry = Number.isFinite(state.droneSessionExpiry) ? (state.droneSessionExpiry as number) : null;
+
+        if (persistedDroneStatus === "active" && persistedExpiry) {
+          if (now >= persistedExpiry) {
+            // Session expired on refresh → reset to normal mode
+            state.satelliteMode = false;
+            state.droneStatus = "idle";
+            state.droneTimer = 0;
+            state.droneSessionExpiry = null;
+            state.droneTetherCenter = null;
+            state.viewingMode = "personal";
+            state.droneTargetLocation = null;
+            state.droneCurrentLocation = null;
+          } else {
+            // Valid active session → keep slide-out, sync timer
+            state.satelliteMode = true;
+            state.droneTimer = Math.max(0, Math.floor((persistedExpiry - now) / 1000));
+          }
+        } else if (state.satelliteMode && (persistedDroneStatus === "idle" || !persistedDroneStatus)) {
+          // Stale: satelliteMode persisted but no active session → reset
+          state.satelliteMode = false;
+          state.droneStatus = "idle";
+          state.viewingMode = "personal";
+        } else if (persistedDroneStatus === "targeting" || persistedDroneStatus === "deploying") {
+          // Transient states can't be restored on refresh → reset
+          state.satelliteMode = false;
+          state.droneStatus = "idle";
+          state.viewingMode = "personal";
+          state.droneTargetLocation = null;
+          state.droneCurrentLocation = null;
+          state.droneSessionExpiry = null;
+          state.droneTetherCenter = null;
+        }
+
         // Normalized rehydration
         const normalizedParcels = Object.fromEntries(
           Object.entries(state.ownedParcels || {}).map(([id, parcel]) => [
@@ -96,6 +133,11 @@ export const useGameStore = create<GameState>()(
       satelliteCameraLocation: state.satelliteCameraLocation,
       uplinkCharges: state.uplinkCharges,
       lastUplinkRefillTime: state.lastUplinkRefillTime,
+      droneStatus: state.droneStatus,
+      droneSessionExpiry: state.droneSessionExpiry,
+      droneTetherCenter: state.droneTetherCenter,
+      droneTimer: state.droneTimer,
+      viewingMode: state.viewingMode,
     }),
     }
   )
