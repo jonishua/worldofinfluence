@@ -55,7 +55,16 @@ export default function InkPayPrototype() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   
+  // PERSISTENT ROTATION STATE
+  const rotationRef = useRef(0);
+  
   const nodesRef = useRef<Node[]>([]);
+  
+  // CONFIGURABLE SETTINGS
+  const [settings, setSettings] = useState({
+    directCount: 12,
+    viralCount: 800
+  });
 
   // --- RESIZE OBSERVER (FIX ASPECT RATIO) ---
   useEffect(() => {
@@ -174,6 +183,7 @@ export default function InkPayPrototype() {
       ctx.scale(transform.k, transform.k);
 
       rotation += 0.001; 
+      rotationRef.current = rotation; // Sync rotation for hit testing
       const now = Date.now();
 
       // 1. Draw Connectivity Lines
