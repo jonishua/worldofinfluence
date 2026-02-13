@@ -2,7 +2,7 @@
 
 import L from "leaflet";
 import { Briefcase, UserRound, Drone } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { motion } from "framer-motion";
 import {
@@ -245,10 +245,7 @@ function MapFlyToHandler({
   const flyToTarget = useMapStore((state) => state.flyToTarget);
   const triggerMapFlyTo = useMapStore((state) => state.triggerMapFlyTo);
   const droneStatus = useMapStore((state) => state.droneStatus);
-  const completeDeployment = useMapStore((state) => state.completeDeployment);
-  const deploymentTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const deploymentPositionCheckRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const deploymentCompletedRef = useRef(false);
+  const transitionEndTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Lock map interaction during drone flight or active session
   useEffect(() => {
@@ -271,76 +268,35 @@ function MapFlyToHandler({
   }, [map, droneStatus]);
 
   useEffect(() => {
-    if (flyToTarget) {
-      const isDeploying = droneStatus === "deploying";
-      const isTargeting = droneStatus === "targeting";
-      
-      let zoom = 18;
-      if (isDeploying) zoom = 19;
-      if (isTargeting) zoom = 14;
+    if (!flyToTarget) return;
+    const isDeploying = droneStatus === "deploying";
+    const isTargeting = droneStatus === "targeting";
+    let zoom = 18;
+    if (isDeploying) zoom = 19;
+    if (isTargeting) zoom = 14;
+    const duration = isDeploying ? 4 : (isTargeting ? 1.5 : 3);
 
-      const target = [flyToTarget.lat, flyToTarget.lng] as [number, number];
-      const targetLatLng = { lat: flyToTarget.lat, lng: flyToTarget.lng };
-      triggerMapFlyTo(null);
-      deploymentCompletedRef.current = false;
-      onTransitionStart();
-      
-      const duration = isDeploying ? 4 : (isTargeting ? 1.5 : 3);
-      map.flyTo(target, zoom, {
-        duration,
-        easeLinearity: isDeploying ? 0.1 : 0.25,
-      });
+    onTransitionStart();
+    map.flyTo([flyToTarget.lat, flyToTarget.lng], zoom, {
+      duration,
+      easeLinearity: isDeploying ? 0.1 : 0.25,
+    });
+    triggerMapFlyTo(null);
 
-      const finishDeployment = () => {
-        if (deploymentCompletedRef.current) return;
-        deploymentCompletedRef.current = true;
-        map.off('moveend', handleMoveEnd);
-        if (deploymentTimerRef.current) {
-          clearTimeout(deploymentTimerRef.current);
-          deploymentTimerRef.current = null;
-        }
-        if (deploymentPositionCheckRef.current) {
-          clearInterval(deploymentPositionCheckRef.current);
-          deploymentPositionCheckRef.current = null;
-        }
-        if (isDeploying) {
-          completeDeployment();
-        }
+    if (!isDeploying) {
+      transitionEndTimerRef.current = setTimeout(() => {
+        transitionEndTimerRef.current = null;
         onTransitionEnd();
-      };
-
-      const handleMoveEnd = () => finishDeployment();
-      map.on('moveend', handleMoveEnd);
-
-      if (isDeploying) {
-        if (deploymentTimerRef.current) clearTimeout(deploymentTimerRef.current);
-        // Use 6s fallback: Leaflet flyTo moveend can be unreliable for long distance / backgrounded tabs
-        deploymentTimerRef.current = setTimeout(finishDeployment, 6000);
-
-        // Position-based fallback: complete when map center is close to target (robust against RAF throttling)
-        deploymentPositionCheckRef.current = setInterval(() => {
-          const center = map.getCenter();
-          const dist = calculateDistance(
-            { lat: center.lat, lng: center.lng },
-            targetLatLng
-          );
-          if (dist < 0.02) { // ~20m threshold - "arrived" at target
-            finishDeployment();
-          }
-        }, 250);
-      }
+      }, duration * 1000);
     }
-  }, [flyToTarget, map, triggerMapFlyTo, droneStatus, completeDeployment, onTransitionStart, onTransitionEnd]);
 
-  // Cleanup timer on unmount - but NOT when deploying (let timer fire to prevent hang)
-  useEffect(() => {
     return () => {
-      const status = useGameStore.getState().droneStatus;
-      if (status !== "deploying" && deploymentTimerRef.current) {
-        clearTimeout(deploymentTimerRef.current);
+      if (transitionEndTimerRef.current != null) {
+        clearTimeout(transitionEndTimerRef.current);
+        transitionEndTimerRef.current = null;
       }
     };
-  }, []);
+  }, [flyToTarget, map, triggerMapFlyTo, droneStatus, onTransitionStart, onTransitionEnd]);
 
   return null;
 }
@@ -518,6 +474,9 @@ export default function GameMap() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isUserInteracting, setIsUserInteracting] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const onTransitionStart = useCallback(() => setIsTransitioning(true), []);
+  const onTransitionEnd = useCallback(() => setIsTransitioning(false), []);
+  const prevDroneStatusRef = useRef<string>(droneStatus);
   const toastTimeout = useRef<number | null>(null);
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
   const [selectedDropId, setSelectedDropId] = useState<string | null>(null);
@@ -534,6 +493,13 @@ export default function GameMap() {
   }, [droneStatus]);
 
   useEffect(() => {
+    if (prevDroneStatusRef.current === "deploying" && droneStatus !== "deploying") {
+      onTransitionEnd();
+    }
+    prevDroneStatusRef.current = droneStatus;
+  }, [droneStatus, onTransitionEnd]);
+
+  useEffect(() => {
     if (droneStatus !== "active") return;
     const interval = setInterval(() => {
       updateDroneTimer();
@@ -546,7 +512,6 @@ export default function GameMap() {
   const droneAnimRef = useRef<number | null>(null);
   useEffect(() => {
     if (droneStatus !== "deploying" || !userLocation || !droneTargetLocation) return;
-    
     const start = userLocation;
     const end = droneTargetLocation;
     const startTime = performance.now();
@@ -852,8 +817,8 @@ export default function GameMap() {
         <MapClickHandler onSelectParcel={handleSelectParcel} markerClickedRef={markerClickedRef} />
         <MapBoundsWatcher onBoundsChange={setMapBounds} />
         <MapFlyToHandler 
-          onTransitionStart={() => setIsTransitioning(true)} 
-          onTransitionEnd={() => setIsTransitioning(false)} 
+          onTransitionStart={onTransitionStart} 
+          onTransitionEnd={onTransitionEnd} 
         />
         <TargetingReticle />
 
