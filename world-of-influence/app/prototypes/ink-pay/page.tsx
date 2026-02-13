@@ -87,12 +87,11 @@ export default function InkPayPrototype() {
     const names = ["Cloud", "Elon", "Satoshi", "Vibes", "Neo", "Trinity", "Morpheus", "Cipher", "Tank", "Dozer", "Switch", "Apoc"];
     
     // 1. Direct Nodes (Planets)
-    const directCount = 12;
-    for (let i = 0; i < directCount; i++) {
+    for (let i = 0; i < settings.directCount; i++) {
       generated.push({
         id: `d-${i}`,
         type: 'direct',
-        angle: (i / directCount) * (Math.PI * 2),
+        angle: (i / settings.directCount) * (Math.PI * 2),
         radius: DIRECT_RADIUS,
         value: Math.random() * 1000,
         label: `@${names[i % names.length]}`,
@@ -101,10 +100,9 @@ export default function InkPayPrototype() {
     }
 
     // 2. Viral Nodes (Moons)
-    const viralCount = 800;
-    for (let i = 0; i < viralCount; i++) {
-      const parentIndex = Math.floor(Math.random() * directCount);
-      const parentAngle = (parentIndex / directCount) * (Math.PI * 2);
+    for (let i = 0; i < settings.viralCount; i++) {
+      const parentIndex = Math.floor(Math.random() * settings.directCount);
+      const parentAngle = (parentIndex / settings.directCount) * (Math.PI * 2);
       const offset = (Math.random() - 0.5) * 0.8; 
       
       generated.push({
@@ -119,7 +117,7 @@ export default function InkPayPrototype() {
       });
     }
     nodesRef.current = generated;
-  }, []);
+  }, [settings]);
 
   // --- SIMULATION LOOP (Transactions) ---
   useEffect(() => {
@@ -169,7 +167,7 @@ export default function InkPayPrototype() {
     if (!ctx) return;
 
     let animationFrameId: number;
-    let rotation = 0;
+    // Removed local rotation variable to prevent reset on re-render
 
     const render = () => {
       ctx.clearRect(0, 0, dimensions.width, dimensions.height);
@@ -182,13 +180,13 @@ export default function InkPayPrototype() {
       ctx.translate(centerX + transform.x, centerY + transform.y);
       ctx.scale(transform.k, transform.k);
 
-      rotation += 0.001; 
-      rotationRef.current = rotation; // Sync rotation for hit testing
+      // Increment persistent rotation
+      rotationRef.current += 0.0005; // Slower, smoother rotation
+      const rotation = rotationRef.current;
+      
       const now = Date.now();
 
-      // 1. Draw Connectivity Lines
-      ctx.beginPath();
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+      // 1. Draw Connectivity Lines (With Heat Map Logic)
       ctx.lineWidth = 1;
 
       nodesRef.current.forEach(node => {
@@ -201,25 +199,53 @@ export default function InkPayPrototype() {
              const ny = Math.sin(nAngle) * node.radius;
              const px = Math.cos(pAngle) * parent.radius;
              const py = Math.sin(pAngle) * parent.radius;
+             
+             // HEAT MAP: Line brightness depends on node activity
+             const timeSinceActive = now - node.lastActive;
+             const isActive = timeSinceActive < 2000;
+             
+             ctx.beginPath();
+             if (isActive) {
+                 const intensity = 1 - (timeSinceActive / 2000);
+                 ctx.strokeStyle = `rgba(0, 200, 5, ${0.1 + intensity * 0.8})`; // Flash Green
+                 ctx.lineWidth = 1 + intensity;
+             } else {
+                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'; // Dull Grey
+                 ctx.lineWidth = 1;
+             }
+             
              ctx.moveTo(nx, ny);
              ctx.lineTo(px, py);
+             ctx.stroke();
            }
         }
       });
-      ctx.stroke();
 
-      // 2. Draw Direct -> Center Lines
-      ctx.beginPath();
-      ctx.strokeStyle = 'rgba(0, 200, 5, 0.1)';
+      // 2. Draw Direct -> Center Lines (With Heat Map Logic)
       ctx.lineWidth = 2;
       nodesRef.current.filter(n => n.type === 'direct').forEach(node => {
          const angle = node.angle + rotation;
          const x = Math.cos(angle) * node.radius;
          const y = Math.sin(angle) * node.radius;
+         
+         // Heat Map for Direct Lines
+         const timeSinceActive = now - node.lastActive;
+         const isActive = timeSinceActive < 2000;
+         
+         ctx.beginPath();
+         if (isActive) {
+             const intensity = 1 - (timeSinceActive / 2000);
+             ctx.strokeStyle = `rgba(0, 200, 5, ${0.2 + intensity * 0.8})`; 
+             ctx.lineWidth = 2 + intensity * 2;
+         } else {
+             ctx.strokeStyle = 'rgba(0, 200, 5, 0.1)';
+             ctx.lineWidth = 2;
+         }
+         
          ctx.moveTo(x, y);
          ctx.lineTo(0, 0);
+         ctx.stroke();
       });
-      ctx.stroke();
 
       // 3. Draw Nodes
       nodesRef.current.forEach(node => {
@@ -402,10 +428,16 @@ export default function InkPayPrototype() {
   };
   
   // To solve the rotation sync, let's move rotation state to a ref we can access in mousemove
-  const rotationRef = useRef(0);
+  // const rotationRef = useRef(0); // REMOVED DUPLICATE
+
+  // MOUSE REF FOR PHYSICS
+  const mouseRef = useRef({ x: 0, y: 0 });
   
   // Updated Mouse Move with Rotation Awareness
   const handleMouseMoveWithHitTest = (e: React.MouseEvent) => {
+     // Update Mouse Ref for Physics
+     mouseRef.current = { x: e.clientX, y: e.clientY };
+
      if (isDragging) {
         setTransform(prev => ({
             ...prev,
@@ -561,6 +593,39 @@ export default function InkPayPrototype() {
                 ))}
             </AnimatePresence>
          </div>
+      </div>
+
+      {/* SETTINGS PANEL (Top Right) */}
+      <div className="absolute top-24 right-8 z-30 pointer-events-auto bg-slate-900/80 backdrop-blur p-4 rounded-xl border border-white/10 shadow-xl w-64 space-y-4">
+        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Network Config</h3>
+        
+        <div className="space-y-1">
+          <div className="flex justify-between text-xs text-slate-300">
+            <span>Direct (Planets)</span>
+            <span className="font-mono text-emerald-400">{settings.directCount}</span>
+          </div>
+          <input 
+            type="range" 
+            min="3" max="24" step="1"
+            value={settings.directCount}
+            onChange={(e) => setSettings(p => ({ ...p, directCount: parseInt(e.target.value) }))}
+            className="w-full accent-emerald-500 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <div className="flex justify-between text-xs text-slate-300">
+            <span>Viral (Swarm)</span>
+            <span className="font-mono text-emerald-400">{settings.viralCount}</span>
+          </div>
+          <input 
+            type="range" 
+            min="100" max="2000" step="50"
+            value={settings.viralCount}
+            onChange={(e) => setSettings(p => ({ ...p, viralCount: parseInt(e.target.value) }))}
+            className="w-full accent-emerald-500 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+          />
+        </div>
       </div>
 
     </div>
