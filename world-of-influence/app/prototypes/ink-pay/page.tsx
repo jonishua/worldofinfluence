@@ -196,12 +196,22 @@ export default function InkPayPrototype() {
     const generated: Node[] = [];
     const names = ["Cloud", "Elon", "Satoshi", "Vibes", "Neo", "Trinity", "Morpheus", "Cipher", "Tank", "Dozer", "Switch", "Apoc"];
     
+    // Helper to store parent info for weighted distribution
+    const directNodeInfo: { index: number, angle: number, weight: number }[] = [];
+
     // 1. Direct Nodes (Planets)
     for (let i = 0; i < settings.directCount; i++) {
+      // Weight logic: 20% variation range (0.8 to 1.2)
+      // This makes some nodes have ~50% more connections than the smallest ones
+      const weight = 0.8 + Math.random() * 0.4;
+      const angle = (i / settings.directCount) * (Math.PI * 2);
+      
+      directNodeInfo.push({ index: i, angle, weight });
+
       generated.push({
         id: `d-${i}`,
         type: 'direct',
-        angle: (i / settings.directCount) * (Math.PI * 2),
+        angle,
         radius: DIRECT_RADIUS,
         value: Math.random() * 1000,
         label: `@${names[i % names.length]}`,
@@ -209,10 +219,24 @@ export default function InkPayPrototype() {
       });
     }
 
+    // Calculate total weight for normalization
+    const totalWeight = directNodeInfo.reduce((sum, n) => sum + n.weight, 0);
+
     // 2. Viral Nodes (Moons)
     for (let i = 0; i < settings.viralCount; i++) {
-      const parentIndex = Math.floor(Math.random() * settings.directCount);
-      const parentAngle = (parentIndex / settings.directCount) * (Math.PI * 2);
+      // Weighted Random Parent Selection
+      let randomVal = Math.random() * totalWeight;
+      let selectedParent = directNodeInfo[0];
+      
+      for (const p of directNodeInfo) {
+          randomVal -= p.weight;
+          if (randomVal <= 0) {
+              selectedParent = p;
+              break;
+          }
+      }
+
+      const parentAngle = selectedParent.angle;
       const offset = (Math.random() - 0.5) * 0.8; 
       
       generated.push({
@@ -221,7 +245,7 @@ export default function InkPayPrototype() {
         angle: parentAngle + offset,
         radius: VIRAL_RADIUS + (Math.random() * 150 - 75),
         value: Math.random() * 100,
-        parentId: `d-${parentIndex}`,
+        parentId: `d-${selectedParent.index}`,
         label: `@User${Math.floor(Math.random()*9000)}`,
         lastActive: 0
       });
@@ -326,7 +350,7 @@ export default function InkPayPrototype() {
 
       nodesRef.current.forEach(node => {
         // Calculate Base Position
-        const nAngle = node.angle + rotation * (node.type === 'viral' ? 0.5 : 1);
+        const nAngle = node.angle + rotation;
         let nx = Math.cos(nAngle) * node.radius;
         let ny = Math.sin(nAngle) * node.radius;
 
@@ -645,7 +669,7 @@ export default function InkPayPrototype() {
              nx = (node as any)._renderX;
              ny = (node as any)._renderY;
          } else {
-             const angle = node.angle + currentRotation * (node.type === 'viral' ? 0.5 : 1);
+             const angle = node.angle + currentRotation;
              nx = Math.cos(angle) * node.radius;
              ny = Math.sin(angle) * node.radius;
          }
