@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Lock, Zap, Newspaper, Coins, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -80,7 +81,6 @@ export default function SplitLedger({ onOpenProfile }: SplitLedgerProps) {
     const interval = window.setInterval(updateBoost, 1000);
     return () => {
       window.clearInterval(interval);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
       adTimeouts.current.forEach((timeout) => window.clearTimeout(timeout));
       if (toastTimeout.current) {
         window.clearTimeout(toastTimeout.current);
@@ -156,10 +156,13 @@ export default function SplitLedger({ onOpenProfile }: SplitLedgerProps) {
               className="relative flex-shrink-0 group"
             >
               <div className="h-16 w-16 overflow-hidden rounded-[18px] border-2 border-[var(--card-border)] shadow-sm transition group-hover:border-[var(--accent-color)]">
-                <img
+                <Image
                   src={playerAvatar}
                   alt={`${playerName} avatar`}
+                  width={64}
+                  height={64}
                   className="h-full w-full object-cover"
+                  unoptimized
                 />
               </div>
               <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-2 border-[var(--card-bg)] bg-emerald-500 shadow-sm" />

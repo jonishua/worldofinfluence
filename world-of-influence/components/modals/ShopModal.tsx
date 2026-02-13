@@ -18,16 +18,14 @@ import {
   Briefcase,
   PlayCircle,
   Clock,
-  ExternalLink,
   ChevronRight,
   Satellite,
   Moon,
   Crown,
   Star,
-  ChevronLeft,
   Radar
 } from "lucide-react";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import { FormattedIB } from "@/components/hud/IBIcon";
 import { 
@@ -437,7 +435,6 @@ type ShopState = "idle" | "processing" | "manufacturing" | "success";
 export default function ShopModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const influenceBucks = useEconomyStore((state) => state.influenceBucks);
   const addInfluenceBucks = useEconomyStore((state) => state.addInfluenceBucks);
-  const zoningPermits = useEconomyStore((state) => state.zoningPermits);
   const addZoningPermits = useEconomyStore((state) => state.addZoningPermits);
   const activeSubscriptions = useGovernanceStore((state) => state.activeSubscriptions);
   const lastSponsorBriefingTime = useGovernanceStore((state) => state.lastSponsorBriefingTime);

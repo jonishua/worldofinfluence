@@ -3,7 +3,6 @@ import { GameState, getEscrowLimitMs, getBoostStackLimitMs } from "../types";
 import { debounceSync } from "../utils";
 import { 
   computePendingRent, 
-  selectRentRate, 
   selectIsBoostActive
 } from "../economyUtils";
 

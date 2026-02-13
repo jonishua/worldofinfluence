@@ -21,13 +21,6 @@ const rarityColor: Record<ParcelRarity, string> = {
   legendary: "#f59e0b",
 };
 
-const rarityIcon = (rarity: ParcelRarity) => {
-  if (rarity === "legendary") return Crown;
-  if (rarity === "epic") return Home;
-  if (rarity === "rare") return Store;
-  return Zap;
-};
-
 export default function AssetMarker({ position, rarity, lastUpgradedAt }: AssetMarkerProps) {
   const [isPopping, setIsPopping] = useState(false);
 

@@ -40,6 +40,9 @@
 - [x] CI/CD Protocol: Stabilized production build and pushed to live.
 - [ ] Executive Travel Feature (Global Search & Leap)
 
+### Known Issues / QA
+- [ ] **Drone Deployment Freeze** — [BUG_DRONE_DEPLOYMENT_FREEZE.md](tasks/BUG_DRONE_DEPLOYMENT_FREEZE.md) — CRITICAL: Page freezes on "Confirm Location". Handoff doc ready for new agent.
+
 ### UI & Theme Consistency
 - [ ] Theme Consistency — Day / Dusk / Night + Settings - [Agent Task 14](tasks/Theme_Consistency_Day_Dusk_Night_Agent_Task_14.md)
 

@@ -2,9 +2,7 @@ import { bbox, circle, randomPoint, distance } from "@turf/turf";
 import { 
   LatLng, 
   DropRarity, 
-  RewardType, 
   LOOT_TABLE, 
-  Drop
 } from "./types";
 import { metersToKilometers } from "./utils";
 

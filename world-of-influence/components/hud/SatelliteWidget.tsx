@@ -1,6 +1,6 @@
 "use client";
 
-import { Navigation, User, Drone } from "lucide-react";
+import { User, Drone } from "lucide-react";
 import { useMapStore } from "@/store/useGameStore";
 import { motion, AnimatePresence } from "framer-motion";
 

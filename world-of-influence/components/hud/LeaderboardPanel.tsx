@@ -1,10 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import { useMemo } from "react";
 
 import {
   LeaderboardEntry,
-  LeaderboardScope,
   LeaderboardTab,
   useGovernanceStore,
 } from "@/store/useGameStore";
@@ -91,10 +91,13 @@ export default function LeaderboardPanel() {
                 className="rounded-[16px] border border-[var(--card-border)] bg-[var(--gray-surface)]/70 px-4 py-4"
               >
                 <div className="flex items-center gap-3">
-                  <img
+                  <Image
                     src={holder.avatarUrl}
                     alt={`${holder.name} avatar`}
+                    width={44}
+                    height={44}
                     className="h-11 w-11 rounded-[10px] border border-[var(--card-border)] bg-[var(--card-bg)] object-cover"
+                    unoptimized
                   />
                   <div>
                     <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
@@ -129,10 +132,13 @@ export default function LeaderboardPanel() {
                     <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--card-border)] bg-[var(--card-bg)] text-xs font-semibold text-[var(--text-primary)]">
                       {index + 1}
                     </span>
-                    <img
+                    <Image
                       src={entry.avatarUrl}
                       alt={`${entry.name} avatar`}
+                      width={44}
+                      height={44}
                       className="h-11 w-11 rounded-[10px] border border-[var(--card-border)] bg-[var(--card-bg)] object-cover"
+                      unoptimized
                     />
                     <div>
                       <p className="text-sm font-semibold text-[var(--text-primary)]">
@@ -161,10 +167,13 @@ export default function LeaderboardPanel() {
                   <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--card-border)] bg-[var(--gray-bg)] text-xs font-semibold text-[var(--text-primary)]">
                     {playerPosition.rank}
                   </span>
-                  <img
+                  <Image
                     src={playerPosition.entry.avatarUrl}
                     alt={`${playerPosition.entry.name} avatar`}
+                    width={44}
+                    height={44}
                     className="h-11 w-11 rounded-[10px] border border-[var(--card-border)] bg-[var(--card-bg)] object-cover"
+                    unoptimized
                   />
                   <div>
                     <p className="text-sm font-semibold text-[var(--text-primary)]">

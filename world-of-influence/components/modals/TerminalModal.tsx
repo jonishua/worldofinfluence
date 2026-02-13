@@ -55,7 +55,7 @@ export default function TerminalModal({ isOpen, onClose }: TerminalModalProps) {
     betMultiplierRef.current = betMultiplier;
   }, [betMultiplier]);
 
-  const [reelsStopped, setReelsStopped] = useState([false, false, false]);
+  const [, setReelsStopped] = useState([false, false, false]);
   const [winTier, setWinTier] = useState<WinTier | null>(null);
   const [showWinDisplay, setShowWinDisplay] = useState(false);
   const [isShaking, setIsShaking] = useState(false);

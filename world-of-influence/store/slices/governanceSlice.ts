@@ -105,6 +105,7 @@ export const createGovernanceSlice: StateCreator<GameState, [], [], GovernanceSl
     debounceSync(get().syncToCloud);
   },
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- level reserved for future tier logic
   purchaseCityKey: (regionId, costInk, _level) => {
     const state = get();
     if (state.influenceBucks < costInk) {

@@ -70,7 +70,7 @@ const PrototypeButton = ({ children, variant = "primary", status = "active", the
   const themeClasses = themes[theme][variant] || themes.light.primary;
   const lockedClasses = status === "locked" ? "opacity-50 grayscale cursor-not-allowed" : "cursor-pointer";
 
-  const handlePointerDown = (_e: React.PointerEvent) => {
+  const handlePointerDown = () => {
     if (status === "locked") return;
     triggerHapticShockwave();
     setShockwaveKey((k) => k + 1);

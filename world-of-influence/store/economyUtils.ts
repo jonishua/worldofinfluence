@@ -1,10 +1,8 @@
 import { 
   ParcelData, 
-  ParcelRarity, 
   PARCEL_RENT_RATES, 
   BOOST_TIERS, 
   GameState,
-  getEscrowLimitMs
 } from "./types";
 
 export const computeBaseRentRate = (ownedParcels: Record<string, ParcelData>) =>

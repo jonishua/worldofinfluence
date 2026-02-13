@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useMemo } from "react";
 
 import { useGovernanceStore } from "@/store/useGameStore";
@@ -46,10 +47,13 @@ export default function PlayerProfileModal({ isOpen, onClose }: PlayerProfileMod
 
         <div className="mt-5 flex items-center gap-4 rounded-[18px] border border-[var(--card-border)]/80 bg-[var(--gray-surface)]/80 px-4 py-4">
           <div className="flex h-14 w-14 items-center justify-center rounded-[16px] border border-[var(--card-border)] bg-[var(--card-bg)] shadow-sm">
-            <img
+            <Image
               src={playerAvatar}
               alt={`${playerName} avatar`}
+              width={48}
+              height={48}
               className="h-12 w-12 rounded-[12px] object-cover"
+              unoptimized
             />
           </div>
           <div>

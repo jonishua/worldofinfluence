@@ -7,7 +7,7 @@ import {
   DRONE_SESSION_DURATION_SEC 
 } from "@/store/useGameStore";
 import { motion, AnimatePresence } from "framer-motion";
-import { Battery, Power, Signal, Zap, Crosshair, Loader2 } from "lucide-react";
+import { Battery, Power, Signal, Crosshair, Loader2 } from "lucide-react";
 import { useMemo } from "react";
 
 export default function SatelliteOverlay() {

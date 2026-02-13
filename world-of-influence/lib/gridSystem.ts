@@ -14,14 +14,6 @@ export type GridIndex = {
 
 const METERS_PER_DEGREE_LAT = 111_320;
 
-function metersToLat(meters: number) {
-  return meters / METERS_PER_DEGREE_LAT;
-}
-
-function metersToLng(meters: number, latitude: number) {
-  return meters / (METERS_PER_DEGREE_LAT * Math.cos((latitude * Math.PI) / 180));
-}
-
 function metersPerDegreeLng(latitude: number) {
   return METERS_PER_DEGREE_LAT * Math.cos((latitude * Math.PI) / 180);
 }
