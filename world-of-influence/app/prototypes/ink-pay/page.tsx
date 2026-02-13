@@ -169,10 +169,11 @@ export default function InkPayPrototype() {
   
   const nodesRef = useRef<Node[]>([]);
   
-  // CONFIGURABLE SETTINGS
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [settings, setSettings] = useState({
     directCount: 12,
-    viralCount: 800
+    viralCount: 800,
+    activityLevel: 50 // 0-100
   });
 
   // --- RESIZE OBSERVER (FIX ASPECT RATIO) ---
@@ -306,6 +307,10 @@ export default function InkPayPrototype() {
 
       // 1. Draw Connectivity Lines (With Heat Map Logic)
       ctx.lineWidth = 1;
+      
+      // AUDIO SYNC: Pulse the background grid or connection opacity based on recent activity
+      // We can use transactions length as a proxy for "Energy"
+      const energy = Math.min(transactions.length / 5, 1); // 0 to 1 based on activity
 
       nodesRef.current.forEach(node => {
         // Calculate Base Position
