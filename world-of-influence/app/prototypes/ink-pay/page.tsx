@@ -61,19 +61,19 @@ export default function InkPayPrototype() {
       });
     }
 
-    // 2. Viral Nodes (Asteroids) - ~200 visible ones (thousands implied)
-    const viralCount = 200;
+    // 2. Viral Nodes (Asteroids) - ~800 visible ones (thousands implied)
+    const viralCount = 800;
     for (let i = 0; i < viralCount; i++) {
       // Cluster them around directs slightly
       const parentIndex = Math.floor(Math.random() * directCount);
       const parentAngle = (parentIndex / directCount) * (Math.PI * 2);
-      const offset = (Math.random() - 0.5) * 0.5; // Random spread
+      const offset = (Math.random() - 0.5) * 1.5; // Wider spread for more nodes
       
       generated.push({
         id: `v-${i}`,
         type: 'viral',
         angle: parentAngle + offset,
-        radius: VIRAL_RADIUS + (Math.random() * 40 - 20), // Band thickness
+        radius: VIRAL_RADIUS + (Math.random() * 80 - 40), // Thicker band
         value: Math.random() * 100,
         parentId: `d-${parentIndex}`,
       });
