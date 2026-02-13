@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Activity, Users, Zap, Search, Plus, Minus } from 'lucide-react';
+import { Activity, Users, Zap, Search, Plus, Minus, Volume2, VolumeX } from 'lucide-react';
 
 /**
- * PROTOTYPE: INK PAY - ORBITAL LEDGER (v2.1)
+ * PROTOTYPE: INK PAY - ORBITAL LEDGER (v2.2)
  * Features:
  * - Zoom/Pan (Infinite Canvas feel)
  * - Connected Lineages (Viral -> Direct Lines)
@@ -13,7 +13,96 @@ import { Activity, Users, Zap, Search, Plus, Minus } from 'lucide-react';
  * - Level of Detail (Show names on zoom)
  * - Hover Interaction (Expand nodes on mouseover)
  * - Correct Aspect Ratio (No stretching)
+ * - Audio-Reactive Pulse (Sound + Visual Sync)
  */
+
+// --- AUDIO ENGINE ---
+class AudioEngine {
+  ctx: AudioContext | null = null;
+  masterGain: GainNode | null = null;
+  ambientOsc: OscillatorNode | null = null;
+  ambientLFO: OscillatorNode | null = null;
+  isMuted: boolean = true;
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      const AudioContextClass = (window.AudioContext || (window as any).webkitAudioContext);
+      if (AudioContextClass) {
+          this.ctx = new AudioContextClass();
+          this.masterGain = this.ctx.createGain();
+          this.masterGain.connect(this.ctx.destination);
+          this.masterGain.gain.value = 0; // Start muted
+      }
+    }
+  }
+
+  toggleMute(mute: boolean) {
+    this.isMuted = mute;
+    if (this.ctx?.state === 'suspended') {
+        this.ctx.resume();
+    }
+    
+    if (this.masterGain) {
+        // Smooth fade
+        const now = this.ctx!.currentTime;
+        this.masterGain.gain.cancelScheduledValues(now);
+        this.masterGain.gain.linearRampToValueAtTime(mute ? 0 : 0.5, now + 0.5);
+    }
+
+    if (!mute && !this.ambientOsc) {
+        this.startAmbient();
+    }
+  }
+
+  startAmbient() {
+    if (!this.ctx || !this.masterGain) return;
+    
+    // Low Drone
+    this.ambientOsc = this.ctx.createOscillator();
+    this.ambientOsc.type = 'sine';
+    this.ambientOsc.frequency.value = 55; // A1 (Low)
+
+    // LFO for "Thrum"
+    this.ambientLFO = this.ctx.createOscillator();
+    this.ambientLFO.type = 'sine';
+    this.ambientLFO.frequency.value = 0.1; // Very slow pulse
+    
+    const lfoGain = this.ctx.createGain();
+    lfoGain.gain.value = 500; 
+
+    // Filter for texture
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 200;
+
+    this.ambientOsc.connect(filter);
+    filter.connect(this.masterGain);
+    
+    this.ambientOsc.start();
+  }
+
+  playPing() {
+    if (this.isMuted || !this.ctx || !this.masterGain) return;
+
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+
+    // Random High Pitch (Digital drop sound)
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800 + Math.random() * 400, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(200, this.ctx.currentTime + 0.1);
+
+    // Envelope
+    gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.15);
+
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.2);
+  }
+}
 
 // --- TYPES ---
 type NodeType = 'user' | 'direct' | 'viral';
@@ -44,6 +133,26 @@ const ZOOM_SENSITIVITY = 0.001;
 export default function InkPayPrototype() {
   const [balance, setBalance] = useState(12450.50);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isMuted, setIsMuted] = useState(true);
+  
+  // Audio Engine Ref
+  const audioRef = useRef<AudioEngine | null>(null);
+
+  // Initialize Audio Engine
+  useEffect(() => {
+    audioRef.current = new AudioEngine();
+    return () => {
+        if (audioRef.current?.ctx) {
+            audioRef.current.ctx.close();
+        }
+    }
+  }, []);
+
+  const toggleAudio = () => {
+      const newState = !isMuted;
+      setIsMuted(newState);
+      audioRef.current?.toggleMute(newState);
+  };
   
   // Viewport State
   const [transform, setTransform] = useState({ k: 0.6, x: 0, y: 0 });
@@ -140,6 +249,9 @@ export default function InkPayPrototype() {
         }
       }
 
+      // Play Sound
+      audioRef.current?.playPing();
+
       const newTx: Transaction = {
         id: Math.random().toString(36).substr(2, 9),
         fromNodeId: sourceNode.id,
@@ -186,31 +298,70 @@ export default function InkPayPrototype() {
       
       const now = Date.now();
 
+      // PHYSICS: Calculate Mouse in World Coords
+      const worldMouseX = (mouseRef.current.x - (centerX + transform.x)) / transform.k;
+      const worldMouseY = (mouseRef.current.y - (centerY + transform.y)) / transform.k;
+      const REPULSION_RADIUS = 200;
+      const REPULSION_FORCE = 100;
+
       // 1. Draw Connectivity Lines (With Heat Map Logic)
       ctx.lineWidth = 1;
 
       nodesRef.current.forEach(node => {
+        // Calculate Base Position
+        const nAngle = node.angle + rotation * (node.type === 'viral' ? 0.5 : 1);
+        let nx = Math.cos(nAngle) * node.radius;
+        let ny = Math.sin(nAngle) * node.radius;
+
+        // Apply Physics Offset to Node Position
+        const dx = nx - worldMouseX;
+        const dy = ny - worldMouseY;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        
+        if (dist < REPULSION_RADIUS) {
+            const force = (1 - dist / REPULSION_RADIUS) * REPULSION_FORCE;
+            const angle = Math.atan2(dy, dx);
+            nx += Math.cos(angle) * force;
+            ny += Math.sin(angle) * force;
+        }
+
+        // Store active position for hit testing / drawing lines
+        // We attach it to the node object temporarily for this frame
+        (node as any)._renderX = nx;
+        (node as any)._renderY = ny;
+
         if (node.type === 'viral' && node.parentId) {
            const parent = nodesRef.current.find(n => n.id === node.parentId);
            if (parent) {
-             const nAngle = node.angle + rotation * 0.5;
+             // Parent Position (Also apply physics if close?)
              const pAngle = parent.angle + rotation;
-             const nx = Math.cos(nAngle) * node.radius;
-             const ny = Math.sin(nAngle) * node.radius;
-             const px = Math.cos(pAngle) * parent.radius;
-             const py = Math.sin(pAngle) * parent.radius;
+             let px = Math.cos(pAngle) * parent.radius;
+             let py = Math.sin(pAngle) * parent.radius;
              
-             // HEAT MAP: Line brightness depends on node activity
+             // Apply Physics to Parent too (subtle)
+             const pdx = px - worldMouseX;
+             const pdy = py - worldMouseY;
+             const pdist = Math.sqrt(pdx*pdx + pdy*pdy);
+             if (pdist < REPULSION_RADIUS) {
+                 const force = (1 - pdist / REPULSION_RADIUS) * (REPULSION_FORCE * 0.5); // Less force on heavy planets
+                 const angle = Math.atan2(pdy, pdx);
+                 px += Math.cos(angle) * force;
+                 py += Math.sin(angle) * force;
+             }
+             (parent as any)._renderX = px;
+             (parent as any)._renderY = py;
+
+             // HEAT MAP logic
              const timeSinceActive = now - node.lastActive;
              const isActive = timeSinceActive < 2000;
              
              ctx.beginPath();
              if (isActive) {
                  const intensity = 1 - (timeSinceActive / 2000);
-                 ctx.strokeStyle = `rgba(0, 200, 5, ${0.1 + intensity * 0.8})`; // Flash Green
+                 ctx.strokeStyle = `rgba(0, 200, 5, ${0.1 + intensity * 0.8})`; 
                  ctx.lineWidth = 1 + intensity;
              } else {
-                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'; // Dull Grey
+                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
                  ctx.lineWidth = 1;
              }
              
@@ -221,14 +372,12 @@ export default function InkPayPrototype() {
         }
       });
 
-      // 2. Draw Direct -> Center Lines (With Heat Map Logic)
+      // 2. Draw Direct -> Center Lines
       ctx.lineWidth = 2;
       nodesRef.current.filter(n => n.type === 'direct').forEach(node => {
-         const angle = node.angle + rotation;
-         const x = Math.cos(angle) * node.radius;
-         const y = Math.sin(angle) * node.radius;
+         const x = (node as any)._renderX || Math.cos(node.angle + rotation) * node.radius;
+         const y = (node as any)._renderY || Math.sin(node.angle + rotation) * node.radius;
          
-         // Heat Map for Direct Lines
          const timeSinceActive = now - node.lastActive;
          const isActive = timeSinceActive < 2000;
          
@@ -247,11 +396,13 @@ export default function InkPayPrototype() {
          ctx.stroke();
       });
 
-      // 3. Draw Nodes
+      // 3. Draw Nodes (Using cached render positions)
       nodesRef.current.forEach(node => {
-        const angle = node.angle + rotation * (node.type === 'viral' ? 0.5 : 1);
-        const x = Math.cos(angle) * node.radius;
-        const y = Math.sin(angle) * node.radius;
+        const x = (node as any)._renderX;
+        const y = (node as any)._renderY;
+        
+        // Skip if not calculated (should have been in step 1 or 2)
+        if (x === undefined) return; 
 
         const timeSinceActive = now - node.lastActive;
         const isActive = timeSinceActive < 1000;
@@ -273,8 +424,6 @@ export default function InkPayPrototype() {
           ctx.fillStyle = `rgba(255, 255, 255, 0.2)`;
           ctx.arc(x, y, node.type === 'direct' ? 25 : 15, 0, Math.PI * 2);
           ctx.fill();
-          
-          // Hover Ring
           ctx.strokeStyle = '#fff';
           ctx.lineWidth = 1;
           ctx.stroke();
@@ -284,7 +433,7 @@ export default function InkPayPrototype() {
         ctx.beginPath();
         let size = node.type === 'direct' ? 6 : 2;
         if (isActive) size += 2;
-        if (isHovered) size += 3; // Pop on hover
+        if (isHovered) size += 3;
 
         if (node.type === 'direct') {
           ctx.fillStyle = isActive || isHovered ? '#39FF14' : '#00C805';
@@ -295,9 +444,8 @@ export default function InkPayPrototype() {
         }
         ctx.fill();
 
-        // Labels (Show on zoom OR hover)
+        // Labels
         const showLabel = (transform.k > 1.2 && (node.type === 'direct' || isActive)) || isHovered;
-        
         if (showLabel) {
            ctx.fillStyle = '#fff';
            ctx.font = isHovered ? 'bold 14px monospace' : '12px monospace';
@@ -306,7 +454,10 @@ export default function InkPayPrototype() {
         }
       });
 
-      // 4. Draw Transactions (Comets)
+      // 4. Draw Transactions (Update to use render positions?)
+      // Since tx is interpolation, we can just use the computed positions of the nodes if we can find them.
+      // But we just computed them in the loop.
+      // Let's use the node's current computed render position for the start/end points to make comets follow the physics!
       transactions.forEach(tx => {
         const age = now - tx.timestamp;
         const duration = 1500;
@@ -315,9 +466,11 @@ export default function InkPayPrototype() {
         const node = nodesRef.current.find(n => n.id === tx.fromNodeId);
         if (!node) return;
 
-        const nAngle = node.angle + rotation * (node.type === 'viral' ? 0.5 : 1);
-        const nx = Math.cos(nAngle) * node.radius;
-        const ny = Math.sin(nAngle) * node.radius;
+        // Start from Node's current physics position
+        const nx = (node as any)._renderX;
+        const ny = (node as any)._renderY;
+        
+        if (nx === undefined) return; // Should not happen
 
         let targetX = 0, targetY = 0;
         let startX = nx, startY = ny;
@@ -325,9 +478,8 @@ export default function InkPayPrototype() {
         if (node.type === 'viral' && node.parentId) {
            const parent = nodesRef.current.find(n => n.id === node.parentId);
            if (parent) {
-              const pAngle = parent.angle + rotation;
-              const px = Math.cos(pAngle) * parent.radius;
-              const py = Math.sin(pAngle) * parent.radius;
+              const px = (parent as any)._renderX;
+              const py = (parent as any)._renderY;
               
               if (progress < 0.5) {
                  const localProg = progress * 2;
@@ -468,9 +620,18 @@ export default function InkPayPrototype() {
      }
 
      for (const node of nodesRef.current) {
-         const angle = node.angle + currentRotation * (node.type === 'viral' ? 0.5 : 1);
-         const nx = Math.cos(angle) * node.radius;
-         const ny = Math.sin(angle) * node.radius;
+         // Using cached physics position from the last render if available
+         // Fallback to strict orbit calc if not
+         let nx, ny;
+         
+         if ((node as any)._renderX !== undefined) {
+             nx = (node as any)._renderX;
+             ny = (node as any)._renderY;
+         } else {
+             const angle = node.angle + currentRotation * (node.type === 'viral' ? 0.5 : 1);
+             nx = Math.cos(angle) * node.radius;
+             ny = Math.sin(angle) * node.radius;
+         }
          
          const dx = worldX - nx;
          const dy = worldY - ny;
@@ -504,10 +665,19 @@ export default function InkPayPrototype() {
           </div>
         </div>
 
-        <div className="text-right pointer-events-auto bg-slate-900/80 backdrop-blur-md p-4 rounded-2xl border border-white/10 shadow-xl">
-          <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">Total Yield</div>
-          <div className="text-3xl font-mono font-bold text-emerald-400 tabular-nums drop-shadow-[0_0_8px_rgba(0,200,5,0.5)]">
-            ${balance.toFixed(2)}
+        <div className="text-right pointer-events-auto bg-slate-900/80 backdrop-blur-md p-4 rounded-2xl border border-white/10 shadow-xl flex items-center gap-4">
+          <button 
+             onClick={toggleAudio}
+             className="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-colors border border-white/5"
+          >
+             {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} className="text-emerald-400" />}
+          </button>
+          
+          <div>
+            <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">Total Yield</div>
+            <div className="text-3xl font-mono font-bold text-emerald-400 tabular-nums drop-shadow-[0_0_8px_rgba(0,200,5,0.5)]">
+                ${balance.toFixed(2)}
+            </div>
           </div>
         </div>
       </header>
