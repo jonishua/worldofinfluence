@@ -231,13 +231,25 @@ export default function InkPayPrototype() {
 
   // --- SIMULATION LOOP (Transactions) ---
   useEffect(() => {
+    // Map activityLevel (0-100) to interval (2000ms - 50ms)
+    // Higher activity = Lower interval
+    const baseInterval = 2000;
+    const minInterval = 50;
+    const speed = settings.activityLevel / 100; // 0 to 1
+    // Logarithmic-ish scaling for feel
+    const currentInterval = baseInterval - (speed * (baseInterval - minInterval));
+
     const interval = setInterval(() => {
       if (nodesRef.current.length === 0) return;
 
       const sourceNode = nodesRef.current[Math.floor(Math.random() * nodesRef.current.length)];
       if (!sourceNode) return;
 
-      const amount = Math.random() * 15 + 5;
+      // Amount scales slightly with activity too? Or just frequency. 
+      // Let's scale amount variance.
+      const baseAmount = 5;
+      const variance = 15 + (speed * 50); // More volatility at high speeds
+      const amount = Math.random() * variance + baseAmount;
       
       // Update Node "Active" State for visual flash
       sourceNode.lastActive = Date.now();
@@ -265,12 +277,12 @@ export default function InkPayPrototype() {
 
       setTimeout(() => {
         setTransactions(prev => prev.filter(t => t.id !== newTx.id));
-      }, 3000); // Increased life for smoother list
+      }, 3000); 
 
-    }, 300);
+    }, currentInterval);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [settings.activityLevel]);
 
   // --- CANVAS RENDERING ---
   useEffect(() => {
@@ -671,6 +683,21 @@ export default function InkPayPrototype() {
         </div>
 
         <div className="text-right pointer-events-auto bg-slate-900/80 backdrop-blur-md p-4 rounded-2xl border border-white/10 shadow-xl flex items-center gap-4">
+          
+          {/* SIMULATION TOGGLE */}
+          <button 
+             onClick={() => setIsConfigOpen(!isConfigOpen)}
+             className={`px-4 py-2 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all
+                ${isConfigOpen 
+                    ? 'bg-emerald-500 text-slate-900 border-emerald-400 shadow-[0_0_15px_rgba(0,200,5,0.4)]' 
+                    : 'bg-slate-800 text-slate-400 border-white/10 hover:border-white/30 hover:text-white'
+                }`}
+          >
+             Simulation
+          </button>
+
+          <div className="h-8 w-px bg-white/10" />
+
           <button 
              onClick={toggleAudio}
              className="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-colors border border-white/5"
@@ -685,6 +712,69 @@ export default function InkPayPrototype() {
             </div>
           </div>
         </div>
+
+        {/* SETTINGS PANEL (Slide Down) */}
+        <AnimatePresence>
+            {isConfigOpen && (
+                <motion.div 
+                    initial={{ opacity: 0, y: -20, height: 0 }}
+                    animate={{ opacity: 1, y: 0, height: 'auto' }}
+                    exit={{ opacity: 0, y: -20, height: 0 }}
+                    className="absolute top-[100%] right-8 mt-4 z-30 pointer-events-auto bg-slate-900/90 backdrop-blur-xl p-6 rounded-2xl border border-white/10 shadow-2xl w-80 space-y-6 overflow-hidden"
+                >
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center pb-2 border-b border-white/5">
+                            <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-widest">Network Config</h3>
+                        </div>
+                        
+                        {/* Direct Connections */}
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-xs text-slate-300">
+                                <span>Direct Connections</span>
+                                <span className="font-mono text-emerald-400">{settings.directCount}</span>
+                            </div>
+                            <input 
+                                type="range" 
+                                min="3" max="24" step="1"
+                                value={settings.directCount}
+                                onChange={(e) => setSettings(p => ({ ...p, directCount: parseInt(e.target.value) }))}
+                                className="w-full accent-emerald-500 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                            />
+                        </div>
+
+                        {/* Viral Connections */}
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-xs text-slate-300">
+                                <span>Viral Connections</span>
+                                <span className="font-mono text-emerald-400">{settings.viralCount}</span>
+                            </div>
+                            <input 
+                                type="range" 
+                                min="100" max="2000" step="50"
+                                value={settings.viralCount}
+                                onChange={(e) => setSettings(p => ({ ...p, viralCount: parseInt(e.target.value) }))}
+                                className="w-full accent-emerald-500 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                            />
+                        </div>
+
+                        {/* Activity Level */}
+                        <div className="space-y-2 pt-2 border-t border-white/5">
+                            <div className="flex justify-between text-xs text-slate-300">
+                                <span className="text-white font-bold">Money Flow (Activity)</span>
+                                <span className="font-mono text-emerald-400">{settings.activityLevel}%</span>
+                            </div>
+                            <input 
+                                type="range" 
+                                min="1" max="100" step="1"
+                                value={settings.activityLevel}
+                                onChange={(e) => setSettings(p => ({ ...p, activityLevel: parseInt(e.target.value) }))}
+                                className="w-full accent-emerald-500 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                            />
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+        </AnimatePresence>
       </header>
 
       {/* CANVAS CONTAINER */}
@@ -768,39 +858,6 @@ export default function InkPayPrototype() {
                 ))}
             </AnimatePresence>
          </div>
-      </div>
-
-      {/* SETTINGS PANEL (Top Right) */}
-      <div className="absolute top-24 right-8 z-30 pointer-events-auto bg-slate-900/80 backdrop-blur p-4 rounded-xl border border-white/10 shadow-xl w-64 space-y-4">
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Network Config</h3>
-        
-        <div className="space-y-1">
-          <div className="flex justify-between text-xs text-slate-300">
-            <span>Direct (Planets)</span>
-            <span className="font-mono text-emerald-400">{settings.directCount}</span>
-          </div>
-          <input 
-            type="range" 
-            min="3" max="24" step="1"
-            value={settings.directCount}
-            onChange={(e) => setSettings(p => ({ ...p, directCount: parseInt(e.target.value) }))}
-            className="w-full accent-emerald-500 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <div className="flex justify-between text-xs text-slate-300">
-            <span>Viral (Swarm)</span>
-            <span className="font-mono text-emerald-400">{settings.viralCount}</span>
-          </div>
-          <input 
-            type="range" 
-            min="100" max="2000" step="50"
-            value={settings.viralCount}
-            onChange={(e) => setSettings(p => ({ ...p, viralCount: parseInt(e.target.value) }))}
-            className="w-full accent-emerald-500 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer"
-          />
-        </div>
       </div>
 
     </div>
