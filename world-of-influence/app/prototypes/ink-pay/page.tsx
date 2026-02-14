@@ -130,6 +130,44 @@ const DIRECT_RADIUS = 300;
 const VIRAL_RADIUS = 600;
 const ZOOM_SENSITIVITY = 0.001;
 
+// --- GROWTH LOGIC HELPER ---
+const calculateGrowth = (day: number) => {
+    // 1. Directs: Start at 1, Explosive to Day 45, then Linear to Year End
+    const maxDirects = 100000;
+    let currentDirects = 1;
+    
+    // Phase 1: The Launch (Day 0-45) -> Exponential to 40k
+    // This creates the "hockey stick" feeling
+    const launchDuration = 45;
+    const launchTarget = 40000;
+    
+    if (day <= launchDuration) {
+        if (day === 0) return { currentDirects: 1, currentVirals: 0 };
+        const t = day / launchDuration;
+        const progress = Math.pow(t, 3.5); // Steeper Cubic ease in
+        currentDirects = 1 + Math.floor(launchTarget * progress);
+    } else {
+        // Phase 2: The Sustain (Day 45-365) -> Linear to 100k
+        const remainingTime = 365 - launchDuration;
+        const progress = (day - launchDuration) / remainingTime;
+        currentDirects = launchTarget + Math.floor((maxDirects - launchTarget) * progress);
+    }
+    
+    // 2. Virals: Lagged start (Day 20)
+    const maxVirals = 150000;
+    let currentVirals = 0;
+    const viralStartDay = 20;
+    
+    if (day > viralStartDay) {
+        const viralDuration = 365 - viralStartDay;
+        const t = (day - viralStartDay) / viralDuration;
+        const progress = Math.pow(t, 2); // Quadratic
+        currentVirals = Math.floor(maxVirals * progress);
+    }
+    
+    return { currentDirects, currentVirals };
+};
+
 export default function InkPayPrototype() {
   const [balance, setBalance] = useState(12450.50);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -201,33 +239,7 @@ export default function InkPayPrototype() {
   useEffect(() => {
     if (simMode !== 'dream') return;
 
-    // Growth Curve Logic (Nyjah 1M Scenario)
-    // 10% Conversion = 100k Directs (Grow continuously)
-    // 1.5x Virality = 150k Virals
-    
-    // Directs: Linear Growth + Burst (The Long Tail)
-    // Starts fast (The Drop), but continues growing all year
-    const maxDirects = 100000;
-    // Logistic start (Day 0-30) + Linear tail (Day 30-365)
-    let directProgress = 0;
-    if (timelineDay < 30) {
-        // Fast S-Curve start
-        directProgress = 1 / (1 + Math.exp(-0.2 * (timelineDay - 10))); 
-    } else {
-        // Linear growth after first month (The Long Tail)
-        const base = 1 / (1 + Math.exp(-0.2 * (20))); // Value at day 30 approx
-        directProgress = base + ((timelineDay - 30) / 335) * (1 - base);
-    }
-    const currentDirects = Math.floor(maxDirects * directProgress);
-
-    // Virals: Exponential Lagged
-    // Starts after Day 30
-    const maxVirals = 150000;
-    let viralProgress = 0;
-    if (timelineDay > 15) { // Start viral earlier
-        viralProgress = Math.pow((timelineDay - 15) / 350, 2); // Quadratic growth
-    }
-    const currentVirals = Math.floor(maxVirals * viralProgress);
+    const { currentDirects, currentVirals } = calculateGrowth(timelineDay);
 
     // VISUAL SCALING: Super-Node Logic
     // Instead of clamping max nodes, we scale 'value' per node
@@ -244,14 +256,15 @@ export default function InkPayPrototype() {
     // 2. Clamp at maxVisualDirects
     // 3. If clamped, increase node SIZE/BRIGHTNESS (handled in render loop via radius)
     
+    // We allow starting with just 1 node (don't clamp min to 3)
     const targetDirectNodes = Math.min(Math.ceil(currentDirects / 100), maxVisualDirects);
     const targetViralNodes = Math.min(Math.ceil(currentVirals / 50), maxVisualVirals);
 
     // Update Visual Settings
     setSettings(prev => ({
         ...prev,
-        directCount: Math.max(3, targetDirectNodes),
-        viralCount: Math.max(100, targetViralNodes),
+        directCount: Math.max(1, targetDirectNodes),
+        viralCount: Math.max(0, targetViralNodes),
         // Activity increases with user count to spin faster
         activityLevel: Math.min(100, 10 + (currentDirects + currentVirals) / 2000)
     }));
@@ -559,6 +572,15 @@ export default function InkPayPrototype() {
         // Node Body
         ctx.beginPath();
         let size = node.type === 'direct' ? 6 : 2;
+        
+        // SUPER-NODE SCALING (Visual Density)
+        // If we are at max capacity (e.g. 50 directs), scale size based on total users
+        // We infer "density" from the settings vs max
+        if (node.type === 'direct' && settings.directCount >= 50) {
+             // Pulse size based on activity
+             size = 8 + Math.sin(now * 0.005 + node.angle) * 2; 
+        }
+
         if (isActive) size += 2;
         if (isHovered) size += 3;
 
@@ -932,13 +954,13 @@ export default function InkPayPrototype() {
                                         <div className="text-[10px] text-slate-500 uppercase">Est. Directs</div>
                                         {/* Show Calculated Real Value, not Visual */}
                                         <div className="text-lg font-mono text-white">
-                                            {Math.floor(100000 / (1 + Math.exp(-0.1 * (timelineDay - 20)))).toLocaleString()}
+                                            {calculateGrowth(timelineDay).currentDirects.toLocaleString()}
                                         </div>
                                     </div>
                                     <div>
                                         <div className="text-[10px] text-slate-500 uppercase">Est. Virals</div>
                                         <div className="text-lg font-mono text-emerald-400">
-                                            {Math.floor(150000 * (timelineDay > 30 ? Math.pow((timelineDay - 30) / 335, 2) : 0)).toLocaleString()}
+                                            {calculateGrowth(timelineDay).currentVirals.toLocaleString()}
                                         </div>
                                     </div>
                                 </div>
