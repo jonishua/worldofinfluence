@@ -2,7 +2,7 @@
 
 import L from "leaflet";
 import { Briefcase, UserRound, Drone } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { motion } from "framer-motion";
 import {
@@ -87,7 +87,6 @@ function useSmoothedLocation(target: LatLng) {
 function AutoCenter({
   center,
   isUserInteracting,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- reserved for future auto-center behavior
   satelliteMode: _satelliteMode,
   droneStatus,
   isTransitioning,
@@ -246,10 +245,7 @@ function MapFlyToHandler({
   const flyToTarget = useMapStore((state) => state.flyToTarget);
   const triggerMapFlyTo = useMapStore((state) => state.triggerMapFlyTo);
   const droneStatus = useMapStore((state) => state.droneStatus);
-  const completeDeployment = useMapStore((state) => state.completeDeployment);
-  const deploymentTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const deploymentPositionCheckRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const deploymentCompletedRef = useRef(false);
+  const transitionEndTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Lock map interaction during drone flight or active session
   useEffect(() => {
@@ -273,57 +269,34 @@ function MapFlyToHandler({
 
   useEffect(() => {
     if (!flyToTarget) return;
-
     const isDeploying = droneStatus === "deploying";
     const isTargeting = droneStatus === "targeting";
-    const isActive = droneStatus === "active"; // Deployment completed in confirmDeployment; just need to move map
     let zoom = 18;
-    if (isDeploying || isActive) zoom = 19;
+    if (isDeploying) zoom = 19;
     if (isTargeting) zoom = 14;
+    const duration = isDeploying ? 4 : (isTargeting ? 1.5 : 3);
 
-    const target = [flyToTarget.lat, flyToTarget.lng] as [number, number];
-
-    const finishDeployment = () => {
-      if (deploymentCompletedRef.current) return;
-      deploymentCompletedRef.current = true;
-      map.off('moveend', handleMoveEnd);
-      if (deploymentTimerRef.current) {
-        clearTimeout(deploymentTimerRef.current);
-        deploymentTimerRef.current = null;
-      }
-      if (isDeploying) {
-        completeDeployment();
-      }
-      onTransitionEnd();
-    };
-
-    const handleMoveEnd = () => finishDeployment();
-
-    deploymentCompletedRef.current = false;
     onTransitionStart();
-
-    // Always use setView - flyTo causes "Page Unresponsive" on many devices (especially 2nd deploy after timer expiry)
-    map.stop?.(); // Cancel any in-progress animation before starting new one
-    map.setView(target, zoom, { animate: false });
-    if (isDeploying) finishDeployment();
-    else if (!isActive) {
-      map.on('moveend', handleMoveEnd);
-      // No flyTo - use setView only. Targeting/cancel use instant jump.
-    } else {
-      onTransitionEnd(); // Deployment already complete in store
-    }
+    map.flyTo([flyToTarget.lat, flyToTarget.lng], zoom, {
+      duration,
+      easeLinearity: isDeploying ? 0.1 : 0.25,
+    });
     triggerMapFlyTo(null);
-  }, [flyToTarget, map, triggerMapFlyTo, droneStatus, completeDeployment, onTransitionStart, onTransitionEnd]);
 
-  // Cleanup timer on unmount - but NOT when deploying (let timer fire to prevent hang)
-  useEffect(() => {
+    if (!isDeploying) {
+      transitionEndTimerRef.current = setTimeout(() => {
+        transitionEndTimerRef.current = null;
+        onTransitionEnd();
+      }, duration * 1000);
+    }
+
     return () => {
-      const status = useGameStore.getState().droneStatus;
-      if (status !== "deploying" && deploymentTimerRef.current) {
-        clearTimeout(deploymentTimerRef.current);
+      if (transitionEndTimerRef.current != null) {
+        clearTimeout(transitionEndTimerRef.current);
+        transitionEndTimerRef.current = null;
       }
     };
-  }, []);
+  }, [flyToTarget, map, triggerMapFlyTo, droneStatus, onTransitionStart, onTransitionEnd]);
 
   return null;
 }
@@ -441,12 +414,6 @@ const droneIcon = L.divIcon({
   iconAnchor: [24, 24],
 });
 
-/** Drone marker during deployment - DISABLED (no interpolation) to prevent page freeze.
- *  Drone appears at target when deployment completes. */
-function DroneDeployingMarker() {
-  return null;
-}
-
 const buildDropIcon = (rarity: DropRarity, isInRange: boolean, isGlobal: boolean = false) =>
   L.divIcon({
     className: `supply-drop-marker ${isGlobal ? "global-drop" : ""}`,
@@ -482,7 +449,9 @@ export default function GameMap() {
   const droneStatus = useMapStore((state) => state.droneStatus);
   const isLeaping = useMapStore((state) => state.isLeaping);
   const droneTetherCenter = useMapStore((state) => state.droneTetherCenter);
+  const droneCurrentLocation = useMapStore((state) => state.droneCurrentLocation);
   const droneTargetLocation = useMapStore((state) => state.droneTargetLocation);
+  const updateDroneLocation = useMapStore((state) => state.updateDroneLocation);
   const updateDroneTimer = useMapStore((state) => state.updateDroneTimer);
   const satelliteCameraLocation = useMapStore((state) => state.satelliteCameraLocation);
   const drops = useMapStore((state) => state.drops);
@@ -505,6 +474,9 @@ export default function GameMap() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isUserInteracting, setIsUserInteracting] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const onTransitionStart = useCallback(() => setIsTransitioning(true), []);
+  const onTransitionEnd = useCallback(() => setIsTransitioning(false), []);
+  const prevDroneStatusRef = useRef<string>(droneStatus);
   const toastTimeout = useRef<number | null>(null);
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
   const [selectedDropId, setSelectedDropId] = useState<string | null>(null);
@@ -521,6 +493,13 @@ export default function GameMap() {
   }, [droneStatus]);
 
   useEffect(() => {
+    if (prevDroneStatusRef.current === "deploying" && droneStatus !== "deploying") {
+      onTransitionEnd();
+    }
+    prevDroneStatusRef.current = droneStatus;
+  }, [droneStatus, onTransitionEnd]);
+
+  useEffect(() => {
     if (droneStatus !== "active") return;
     const interval = setInterval(() => {
       updateDroneTimer();
@@ -528,8 +507,51 @@ export default function GameMap() {
     return () => clearInterval(interval);
   }, [droneStatus, updateDroneTimer]);
 
-  // Drone interpolation DISABLED - animated marker during deployment caused "Page Unresponsive"
-  // on multiple devices. Map still flies to target; drone appears at destination when complete.
+  // Drone interpolation during deployment - throttled to ~10fps to prevent page freeze
+  // (60 store updates/sec was causing full GameMap re-renders and "Page Unresponsive")
+  const droneAnimRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (droneStatus !== "deploying" || !userLocation || !droneTargetLocation) return;
+    const start = userLocation;
+    const end = droneTargetLocation;
+    const startTime = performance.now();
+    const duration = 4000; // Match flyTo duration
+    const throttleMs = 80; // ~12 fps - smooth enough, light on re-renders
+    let lastUpdateTime = 0;
+    let cancelled = false;
+
+    const animate = (time: number) => {
+      if (cancelled) return;
+      if (useGameStore.getState().droneStatus !== "deploying") return;
+      
+      const progress = Math.min((time - startTime) / duration, 1);
+      const eased = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+      
+      // Throttle store updates - only push to Zustand at most every throttleMs
+      if (time - lastUpdateTime >= throttleMs || progress >= 1) {
+        lastUpdateTime = time;
+        updateDroneLocation({
+          lat: start.lat + (end.lat - start.lat) * eased,
+          lng: start.lng + (end.lng - start.lng) * eased,
+        });
+      }
+
+      if (progress < 1) {
+        droneAnimRef.current = requestAnimationFrame(animate);
+      } else {
+        droneAnimRef.current = null;
+      }
+    };
+
+    droneAnimRef.current = requestAnimationFrame(animate);
+    return () => {
+      cancelled = true;
+      if (droneAnimRef.current != null) {
+        cancelAnimationFrame(droneAnimRef.current);
+        droneAnimRef.current = null;
+      }
+    };
+  }, [droneStatus, userLocation, droneTargetLocation, updateDroneLocation]);
 
   const targetLocation = (satelliteMode && viewingMode === "drone" && droneStatus === "active" && droneTetherCenter)
     ? droneTetherCenter
@@ -646,9 +668,7 @@ export default function GameMap() {
       return;
     }
 
-    // Block only when viewing drone's remote location; allow collection in Personal View
-    const isViewingDroneRemotely = satelliteMode && viewingMode === "drone" && droneStatus === "active";
-    if (isViewingDroneRemotely) {
+    if (satelliteMode) {
       showToast("Signal weak. Must be physically present to retrieve assets.");
       return;
     }
@@ -675,9 +695,7 @@ export default function GameMap() {
   const handleGlobalDropClick = async (drop: GlobalDrop) => {
     if (!userLocation) return;
 
-    // Block only when viewing drone's remote location; allow collection in Personal View
-    const isViewingDroneRemotely = satelliteMode && viewingMode === "drone" && droneStatus === "active";
-    if (isViewingDroneRemotely) {
+    if (satelliteMode) {
       showToast("Signal weak. Must be physically present to retrieve assets.");
       return;
     }
@@ -799,8 +817,8 @@ export default function GameMap() {
         <MapClickHandler onSelectParcel={handleSelectParcel} markerClickedRef={markerClickedRef} />
         <MapBoundsWatcher onBoundsChange={setMapBounds} />
         <MapFlyToHandler 
-          onTransitionStart={() => setIsTransitioning(true)} 
-          onTransitionEnd={() => setIsTransitioning(false)} 
+          onTransitionStart={onTransitionStart} 
+          onTransitionEnd={onTransitionEnd} 
         />
         <TargetingReticle />
 
@@ -870,8 +888,13 @@ export default function GameMap() {
           />
         )}
 
-        {/* Drone Marker during deployment - isolated component to prevent full map re-renders */}
-        <DroneDeployingMarker />
+        {/* Drone Marker - Only show if not current focal point or if transitioning */}
+        {droneStatus === "deploying" && droneCurrentLocation && (
+          <Marker 
+            position={[droneCurrentLocation.lat, droneCurrentLocation.lng]} 
+            icon={droneIcon} 
+          />
+        )}
 
         {droneStatus === "active" && droneTetherCenter && (viewingMode !== "drone" || isTransitioning) && (
           <Marker 

@@ -21,6 +21,8 @@ import { GridBounds } from "@/lib/gridSystem";
 import { metersToKilometers, debounceSync } from "../utils";
 import { buildDropsInRadius, rollLoot, calculateDistance } from "../mapUtils";
 
+let deploymentCompletionTimerId: ReturnType<typeof setTimeout> | null = null;
+
 export interface MapSlice {
   userLocation: LatLng | null;
   locationRequestId: number;
@@ -220,26 +222,32 @@ export const createMapSlice: StateCreator<GameState, [], [], MapSlice> = (set, g
       return;
     }
 
-    // Defer the heavy state update to allow the browser to paint the button press
-    // and prevent the "Page Unresponsive" freeze.
-    setTimeout(() => {
-      set({ 
-        droneStatus: "deploying",
-        droneTargetLocation: target,
-        droneCurrentLocation: state.userLocation,
-        isLeaping: true,
-        viewingMode: "drone",
-        selectedParcel: null // Clear selection on deployment
-      });
-      
-      get().triggerMapFlyTo(target);
-      // Complete immediately - bypass MapFlyToHandler effect (avoids timing/race issues that kept "In-flight" stuck)
+    set({ 
+      droneStatus: "deploying",
+      droneTargetLocation: target,
+      droneCurrentLocation: state.userLocation,
+      isLeaping: true,
+      viewingMode: "drone",
+      selectedParcel: null // Clear selection on deployment
+    });
+    
+    state.triggerMapFlyTo(target);
+    if (deploymentCompletionTimerId != null) {
+      clearTimeout(deploymentCompletionTimerId);
+      deploymentCompletionTimerId = null;
+    }
+    deploymentCompletionTimerId = setTimeout(() => {
+      deploymentCompletionTimerId = null;
       get().completeDeployment();
-      debounceSync(get().syncToCloud);
-    }, 0);
+    }, 6000);
+    debounceSync(get().syncToCloud);
   },
 
   completeDeployment: () => {
+    if (deploymentCompletionTimerId != null) {
+      clearTimeout(deploymentCompletionTimerId);
+      deploymentCompletionTimerId = null;
+    }
     const now = Date.now();
     set({ 
       droneStatus: "active",
@@ -255,6 +263,10 @@ export const createMapSlice: StateCreator<GameState, [], [], MapSlice> = (set, g
   },
 
   cancelDrone: () => {
+    if (deploymentCompletionTimerId != null) {
+      clearTimeout(deploymentCompletionTimerId);
+      deploymentCompletionTimerId = null;
+    }
     const state = get();
     if (state.userLocation) {
       state.triggerMapFlyTo(state.userLocation);
