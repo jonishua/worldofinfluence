@@ -202,57 +202,62 @@ export default function InkPayPrototype() {
     if (simMode !== 'dream') return;
 
     // Growth Curve Logic (Nyjah 1M Scenario)
-    // 10% Conversion = 100k Directs
+    // 10% Conversion = 100k Directs (Grow continuously)
     // 1.5x Virality = 150k Virals
     
-    // Directs: S-Curve (Logistic)
-    // Starts fast (The Drop), plateaus
+    // Directs: Linear Growth + Burst (The Long Tail)
+    // Starts fast (The Drop), but continues growing all year
     const maxDirects = 100000;
-    const directProgress = 1 / (1 + Math.exp(-0.1 * (timelineDay - 20))); // Midpoint at day 20
+    // Logistic start (Day 0-30) + Linear tail (Day 30-365)
+    let directProgress = 0;
+    if (timelineDay < 30) {
+        // Fast S-Curve start
+        directProgress = 1 / (1 + Math.exp(-0.2 * (timelineDay - 10))); 
+    } else {
+        // Linear growth after first month (The Long Tail)
+        const base = 1 / (1 + Math.exp(-0.2 * (20))); // Value at day 30 approx
+        directProgress = base + ((timelineDay - 30) / 335) * (1 - base);
+    }
     const currentDirects = Math.floor(maxDirects * directProgress);
 
     // Virals: Exponential Lagged
     // Starts after Day 30
     const maxVirals = 150000;
     let viralProgress = 0;
-    if (timelineDay > 30) {
-        viralProgress = Math.pow((timelineDay - 30) / 335, 2); // Quadratic growth
+    if (timelineDay > 15) { // Start viral earlier
+        viralProgress = Math.pow((timelineDay - 15) / 350, 2); // Quadratic growth
     }
     const currentVirals = Math.floor(maxVirals * viralProgress);
 
-    // Calculate Balance (Recurring Revenue)
-    // ARPU: $50/yr for Direct, $10/yr for Viral
-    // Daily Rev = (Directs * 50 + Virals * 10) / 365
-    // We accumulated balance over time.
-    // Ideally we'd sum it up, but for scrubbing we can approximate integral.
-    // Simpler: Just set Balance = (Area under curve) * rate.
-    // For visual impact, let's just make it a function of current users * time.
-    // Total Revenue = (AvgUsers * Day) * DailyRate?
-    // Let's keep it cumulative for the "Odometer" feel.
-    // We'll just add to balance in the loop below.
-    
-    // VISUAL SCALING: Clamp for rendering
-    // We can't render 100k nodes. Max 2000.
-    // Directs: Max 24 visually.
-    // Virals: Max 2000 visually.
-    
-    const visualDirects = Math.min(Math.ceil(currentDirects / 4000), 24); // Scale down
-    const visualVirals = Math.min(Math.ceil(currentVirals / 75), 2000); 
+    // VISUAL SCALING: Super-Node Logic
+    // Instead of clamping max nodes, we scale 'value' per node
+    // Max visual nodes = 50 (Direct), 2000 (Viral) to keep performance high
+    const maxVisualDirects = 50;
+    const maxVisualVirals = 1500;
 
-    // Update Visual Settings (Clamped)
-    // We store the REAL numbers in a separate ref or just use them for display
-    // Here we update the settings that drive the RENDER loop
+    // Calculate how many "Real Users" each dot represents
+    // If we have 100k users, and max 50 dots, each dot = 2000 users.
+    // But we want to animate the count growing.
+    
+    // Logic: 
+    // 1. Calculate ideal node count (1 node per 100 users initially)
+    // 2. Clamp at maxVisualDirects
+    // 3. If clamped, increase node SIZE/BRIGHTNESS (handled in render loop via radius)
+    
+    const targetDirectNodes = Math.min(Math.ceil(currentDirects / 100), maxVisualDirects);
+    const targetViralNodes = Math.min(Math.ceil(currentVirals / 50), maxVisualVirals);
+
+    // Update Visual Settings
     setSettings(prev => ({
         ...prev,
-        directCount: Math.max(3, visualDirects),
-        viralCount: Math.max(100, visualVirals),
-        // Activity increases with user count
-        activityLevel: Math.min(100, 10 + (currentDirects + currentVirals) / 2500)
+        directCount: Math.max(3, targetDirectNodes),
+        viralCount: Math.max(100, targetViralNodes),
+        // Activity increases with user count to spin faster
+        activityLevel: Math.min(100, 10 + (currentDirects + currentVirals) / 2000)
     }));
 
     // Update Balance (Accumulated)
-    // We need to add daily revenue for THIS day.
-    const dailyRevenue = (currentDirects * 0.15) + (currentVirals * 0.03); // $50/yr / 365 ~= 0.15
+    const dailyRevenue = (currentDirects * 0.15) + (currentVirals * 0.03); 
     setBalance(prev => prev + dailyRevenue);
 
   }, [timelineDay, simMode]);
@@ -829,53 +834,120 @@ export default function InkPayPrototype() {
                 >
                     <div className="space-y-4">
                         <div className="flex justify-between items-center pb-2 border-b border-white/5">
-                            <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-widest">Network Config</h3>
+                            <div className="flex gap-4 text-xs font-bold uppercase tracking-widest">
+                                <button 
+                                    onClick={() => setSimMode('manual')}
+                                    className={`${simMode === 'manual' ? 'text-emerald-400' : 'text-slate-500 hover:text-white'}`}
+                                >
+                                    Manual
+                                </button>
+                                <button 
+                                    onClick={() => setSimMode('dream')}
+                                    className={`${simMode === 'dream' ? 'text-emerald-400' : 'text-slate-500 hover:text-white'}`}
+                                >
+                                    Dream Sim
+                                </button>
+                            </div>
                         </div>
                         
-                        {/* Direct Connections */}
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-xs text-slate-300">
-                                <span>Direct Connections</span>
-                                <span className="font-mono text-emerald-400">{settings.directCount}</span>
-                            </div>
-                            <input 
-                                type="range" 
-                                min="3" max="24" step="1"
-                                value={settings.directCount}
-                                onChange={(e) => setSettings(p => ({ ...p, directCount: parseInt(e.target.value) }))}
-                                className="w-full accent-emerald-500 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer"
-                            />
-                        </div>
+                        {/* MANUAL MODE */}
+                        {simMode === 'manual' && (
+                            <>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-xs text-slate-300">
+                                        <span>Direct Connections</span>
+                                        <span className="font-mono text-emerald-400">{settings.directCount}</span>
+                                    </div>
+                                    <input 
+                                        type="range" 
+                                        min="3" max="24" step="1"
+                                        value={settings.directCount}
+                                        onChange={(e) => setSettings(p => ({ ...p, directCount: parseInt(e.target.value) }))}
+                                        className="w-full accent-emerald-500 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                                    />
+                                </div>
 
-                        {/* Viral Connections */}
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-xs text-slate-300">
-                                <span>Viral Connections</span>
-                                <span className="font-mono text-emerald-400">{settings.viralCount}</span>
-                            </div>
-                            <input 
-                                type="range" 
-                                min="100" max="2000" step="50"
-                                value={settings.viralCount}
-                                onChange={(e) => setSettings(p => ({ ...p, viralCount: parseInt(e.target.value) }))}
-                                className="w-full accent-emerald-500 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer"
-                            />
-                        </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-xs text-slate-300">
+                                        <span>Viral Connections</span>
+                                        <span className="font-mono text-emerald-400">{settings.viralCount}</span>
+                                    </div>
+                                    <input 
+                                        type="range" 
+                                        min="100" max="2000" step="50"
+                                        value={settings.viralCount}
+                                        onChange={(e) => setSettings(p => ({ ...p, viralCount: parseInt(e.target.value) }))}
+                                        className="w-full accent-emerald-500 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                                    />
+                                </div>
 
-                        {/* Activity Level */}
-                        <div className="space-y-2 pt-2 border-t border-white/5">
-                            <div className="flex justify-between text-xs text-slate-300">
-                                <span className="text-white font-bold">Money Flow (Activity)</span>
-                                <span className="font-mono text-emerald-400">{settings.activityLevel}%</span>
+                                <div className="space-y-2 pt-2 border-t border-white/5">
+                                    <div className="flex justify-between text-xs text-slate-300">
+                                        <span className="text-white font-bold">Money Flow (Activity)</span>
+                                        <span className="font-mono text-emerald-400">{settings.activityLevel}%</span>
+                                    </div>
+                                    <input 
+                                        type="range" 
+                                        min="1" max="100" step="1"
+                                        value={settings.activityLevel}
+                                        onChange={(e) => setSettings(p => ({ ...p, activityLevel: parseInt(e.target.value) }))}
+                                        className="w-full accent-emerald-500 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                                    />
+                                </div>
+                            </>
+                        )}
+
+                        {/* DREAM SIM MODE */}
+                        {simMode === 'dream' && (
+                            <div className="space-y-6">
+                                {/* Timeline Control */}
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-center text-xs text-slate-300">
+                                        <span className="text-white font-bold">Timeline (Day {timelineDay})</span>
+                                        <button 
+                                            onClick={() => {
+                                                if (timelineDay >= 365) setTimelineDay(0);
+                                                setIsPlaying(!isPlaying);
+                                            }}
+                                            className="text-emerald-400 hover:text-emerald-300 uppercase tracking-widest font-bold"
+                                        >
+                                            {isPlaying ? 'Pause' : (timelineDay >= 365 ? 'Replay' : 'Play')}
+                                        </button>
+                                    </div>
+                                    <input 
+                                        type="range" 
+                                        min="0" max="365" step="1"
+                                        value={timelineDay}
+                                        onChange={(e) => {
+                                            setIsPlaying(false);
+                                            setTimelineDay(parseInt(e.target.value));
+                                        }}
+                                        className="w-full accent-emerald-500 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                                    />
+                                </div>
+
+                                {/* Stats Display */}
+                                <div className="grid grid-cols-2 gap-4 pt-2 border-t border-white/5">
+                                    <div>
+                                        <div className="text-[10px] text-slate-500 uppercase">Est. Directs</div>
+                                        {/* Show Calculated Real Value, not Visual */}
+                                        <div className="text-lg font-mono text-white">
+                                            {Math.floor(100000 / (1 + Math.exp(-0.1 * (timelineDay - 20)))).toLocaleString()}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div className="text-[10px] text-slate-500 uppercase">Est. Virals</div>
+                                        <div className="text-lg font-mono text-emerald-400">
+                                            {Math.floor(150000 * (timelineDay > 30 ? Math.pow((timelineDay - 30) / 335, 2) : 0)).toLocaleString()}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="text-[10px] text-slate-500 text-center italic">
+                                    "Nyjah Huston" Scenario (1M Followers)
+                                </div>
                             </div>
-                            <input 
-                                type="range" 
-                                min="1" max="100" step="1"
-                                value={settings.activityLevel}
-                                onChange={(e) => setSettings(p => ({ ...p, activityLevel: parseInt(e.target.value) }))}
-                                className="w-full accent-emerald-500 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer"
-                            />
-                        </div>
+                        )}
                     </div>
                 </motion.div>
             )}
