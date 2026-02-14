@@ -169,12 +169,19 @@ const calculateGrowth = (day: number) => {
 };
 
 export default function InkPayPrototype() {
-  const [balance, setBalance] = useState(12450.50);
+  const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isMuted, setIsMuted] = useState(true);
   
   // Audio Engine Ref
   const audioRef = useRef<AudioEngine | null>(null);
+
+  // Refs for settings to avoid re-triggering simulation loop
+  const settingsRef = useRef(settings);
+
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
 
   // Initialize Audio Engine
   useEffect(() => {
@@ -230,7 +237,7 @@ export default function InkPayPrototype() {
             }
             return prev + 1;
         });
-    }, 50); // Speed of simulation (1 day = 50ms)
+    }, 200); // Slower simulation (1 day = 200ms) -> ~73 seconds for full year
 
     return () => clearInterval(interval);
   }, [isPlaying, simMode]);
@@ -354,80 +361,81 @@ export default function InkPayPrototype() {
 
   // --- SIMULATION LOOP (Transactions) ---
   useEffect(() => {
-    // Map activityLevel (0-100) to interval (2000ms - 50ms)
-    // For small networks (Dream Sim start), we want to force visible activity
-    // even if the "Calculated Activity" is low.
-    
-    // In Dream Sim, 'activityLevel' is derived from user count. 
-    // At Day 1, count is 1. Activity is ~10. Speed is 0.1. Interval is ~1800ms.
-    // 1800ms real time = 36 simulation days (at 50ms/day).
-    // This is why it feels empty.
-    
-    // Fix: If in Dream Sim, we should scale frequency based on SIMULATED TIME vs REAL TIME balance.
-    // But since we want "Juice", let's just make the base interval much faster.
-    
-    const baseInterval = 800; // Much faster base (was 2000)
-    const minInterval = 20;   // Machine gun mode at max
-    const speed = settings.activityLevel / 100; // 0 to 1
-    
-    const currentInterval = baseInterval - (speed * (baseInterval - minInterval));
+    let timeoutId: NodeJS.Timeout;
+    let isRunning = true;
 
-    const interval = setInterval(() => {
-      if (nodesRef.current.length === 0) return;
+    const loop = () => {
+        if (!isRunning) return;
 
-      // Ensure we pick a valid node
-      const sourceNode = nodesRef.current[Math.floor(Math.random() * nodesRef.current.length)];
-      if (!sourceNode) return;
+        // Calculate dynamic interval based on current settings ref
+        // This prevents the loop from resetting constantly when state changes
+        const currentSettings = settingsRef.current;
+        
+        const baseInterval = 800; 
+        const minInterval = 20;   
+        const speed = currentSettings.activityLevel / 100;
+        const currentInterval = baseInterval - (speed * (baseInterval - minInterval));
 
-      // Amount Logic: Micro-transactions vs Whales
-      // 90% Micro ($1.00 - $5.00)
-      // 10% Whale ($150.00 - $250.00)
-      const isWhale = Math.random() > 0.90;
-      let amount = 0;
-      
-      if (isWhale) {
-          amount = 150 + Math.random() * 100;
-      } else {
-          amount = 1 + Math.random() * 4;
-      }
-      
-      // Update Node "Active" State for visual flash
-      sourceNode.lastActive = Date.now();
-      
-      // If it's viral, also flash the parent
-      if (sourceNode.parentId) {
-        const parent = nodesRef.current.find(n => n.id === sourceNode.parentId);
-        if (parent) {
-             setTimeout(() => { parent.lastActive = Date.now() + 500; }, 500);
+        // Execute Transaction
+        if (nodesRef.current.length > 0) {
+            const sourceNode = nodesRef.current[Math.floor(Math.random() * nodesRef.current.length)];
+            
+            if (sourceNode) {
+                // Amount Logic
+                const isWhale = Math.random() > 0.90;
+                let amount = 0;
+                if (isWhale) {
+                    amount = 150 + Math.random() * 100;
+                } else {
+                    amount = 1 + Math.random() * 4;
+                }
+                
+                // Visual Flash
+                sourceNode.lastActive = Date.now();
+                if (sourceNode.parentId) {
+                    const parent = nodesRef.current.find(n => n.id === sourceNode.parentId);
+                    if (parent) {
+                         setTimeout(() => { parent.lastActive = Date.now() + 500; }, 500);
+                    }
+                }
+
+                // Audio
+                if (isWhale && audioRef.current?.ctx) {
+                    audioRef.current.playPing(); 
+                } else {
+                    audioRef.current?.playPing();
+                }
+
+                const newTx: Transaction = {
+                    id: Math.random().toString(36).substr(2, 9),
+                    fromNodeId: sourceNode.id,
+                    amount,
+                    timestamp: Date.now(),
+                };
+
+                setTransactions(prev => [...prev, newTx]);
+                setBalance(prev => prev + amount);
+
+                setTimeout(() => {
+                    setTransactions(prev => prev.filter(t => t.id !== newTx.id));
+                }, 3000);
+            }
         }
-      }
 
-      // Play Sound (Pitch up for whales)
-      if (isWhale && audioRef.current?.ctx) {
-           // Custom whale sound could go here, for now just ping
-           audioRef.current.playPing(); 
-      } else {
-           audioRef.current?.playPing();
-      }
+        // Schedule next iteration
+        // Randomized slightly to feel organic
+        const variance = Math.random() * 200 - 100;
+        timeoutId = setTimeout(loop, Math.max(50, currentInterval + variance));
+    };
 
-      const newTx: Transaction = {
-        id: Math.random().toString(36).substr(2, 9),
-        fromNodeId: sourceNode.id,
-        amount,
-        timestamp: Date.now(),
-      };
+    // Start loop
+    loop();
 
-      setTransactions(prev => [...prev, newTx]);
-      setBalance(prev => prev + amount);
-
-      setTimeout(() => {
-        setTransactions(prev => prev.filter(t => t.id !== newTx.id));
-      }, 3000); 
-
-    }, currentInterval);
-
-    return () => clearInterval(interval);
-  }, [settings.activityLevel]);
+    return () => {
+        isRunning = false;
+        clearTimeout(timeoutId);
+    };
+  }, []); // No dependencies! Uses refs for latest state.
 
   // --- CANVAS RENDERING ---
   useEffect(() => {
