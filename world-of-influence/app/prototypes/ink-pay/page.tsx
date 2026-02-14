@@ -355,24 +355,41 @@ export default function InkPayPrototype() {
   // --- SIMULATION LOOP (Transactions) ---
   useEffect(() => {
     // Map activityLevel (0-100) to interval (2000ms - 50ms)
-    // Higher activity = Lower interval
-    const baseInterval = 2000;
-    const minInterval = 50;
+    // For small networks (Dream Sim start), we want to force visible activity
+    // even if the "Calculated Activity" is low.
+    
+    // In Dream Sim, 'activityLevel' is derived from user count. 
+    // At Day 1, count is 1. Activity is ~10. Speed is 0.1. Interval is ~1800ms.
+    // 1800ms real time = 36 simulation days (at 50ms/day).
+    // This is why it feels empty.
+    
+    // Fix: If in Dream Sim, we should scale frequency based on SIMULATED TIME vs REAL TIME balance.
+    // But since we want "Juice", let's just make the base interval much faster.
+    
+    const baseInterval = 800; // Much faster base (was 2000)
+    const minInterval = 20;   // Machine gun mode at max
     const speed = settings.activityLevel / 100; // 0 to 1
-    // Logarithmic-ish scaling for feel
+    
     const currentInterval = baseInterval - (speed * (baseInterval - minInterval));
 
     const interval = setInterval(() => {
       if (nodesRef.current.length === 0) return;
 
+      // Ensure we pick a valid node
       const sourceNode = nodesRef.current[Math.floor(Math.random() * nodesRef.current.length)];
       if (!sourceNode) return;
 
-      // Amount scales slightly with activity too? Or just frequency. 
-      // Let's scale amount variance.
-      const baseAmount = 5;
-      const variance = 15 + (speed * 50); // More volatility at high speeds
-      const amount = Math.random() * variance + baseAmount;
+      // Amount Logic: Micro-transactions vs Whales
+      // 90% Micro ($1.00 - $5.00)
+      // 10% Whale ($150.00 - $250.00)
+      const isWhale = Math.random() > 0.90;
+      let amount = 0;
+      
+      if (isWhale) {
+          amount = 150 + Math.random() * 100;
+      } else {
+          amount = 1 + Math.random() * 4;
+      }
       
       // Update Node "Active" State for visual flash
       sourceNode.lastActive = Date.now();
@@ -385,8 +402,13 @@ export default function InkPayPrototype() {
         }
       }
 
-      // Play Sound
-      audioRef.current?.playPing();
+      // Play Sound (Pitch up for whales)
+      if (isWhale && audioRef.current?.ctx) {
+           // Custom whale sound could go here, for now just ping
+           audioRef.current.playPing(); 
+      } else {
+           audioRef.current?.playPing();
+      }
 
       const newTx: Transaction = {
         id: Math.random().toString(36).substr(2, 9),
@@ -1046,7 +1068,7 @@ export default function InkPayPrototype() {
                                 <Zap size={14} />
                             </div>
                             <div>
-                                <div className="text-xs font-bold text-white">New Commission</div>
+                                <div className="text-xs font-bold text-white">New Royalty</div>
                                 <div className="text-[10px] text-slate-400 font-mono">Via Node {tx.fromNodeId}</div>
                             </div>
                         </div>
