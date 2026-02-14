@@ -114,6 +114,7 @@ interface Node {
   radius: number; // Distance from center
   value: number; // Earnings magnitude
   parentId?: string; // For viral nodes
+  relativeOffset?: number; // Angle offset from parent (for sticky rotation)
   label: string; // Display name
   lastActive: number; // Timestamp of last transaction
 }
@@ -222,15 +223,21 @@ const calculateGrowth = (day: number, scenarioId: ScenarioId) => {
         currentDirects = launchTarget + Math.floor((maxDirects - launchTarget) * progress);
     }
     
-    // 2. Virals: Lagged start (Day 20)
+    // 2. Virals: Rapid Follow (Day 2 Start)
     let currentVirals = 0;
-    const viralStartDay = 20;
+    const viralStartDay = 2; // Reduced from 20 to 2 for "immediate" feel
     
     if (day > viralStartDay) {
         const viralDuration = 365 - viralStartDay;
         const t = (day - viralStartDay) / viralDuration;
-        const progress = Math.pow(t, 2); // Quadratic
+        // Adjusted curve: faster initial ramp up
+        const progress = Math.pow(t, 1.8); 
         currentVirals = Math.floor(maxVirals * progress);
+        
+        // Ensure minimum virals if we have directs and passed start day
+        if (currentDirects > 5 && currentVirals < currentDirects * 0.5) {
+             currentVirals = Math.floor(currentDirects * 0.5);
+        }
     }
     
     return { currentDirects, currentVirals };
@@ -326,28 +333,33 @@ export default function InkPayPrototype() {
 
     // VISUAL SCALING: Super-Node Logic
     // Instead of clamping max nodes, we scale 'value' per node
-    // Max visual nodes = 50 (Direct), 2000 (Viral) to keep performance high
+    // Max visual nodes = 50 (Direct), 1500 (Viral) to keep performance high
     const maxVisualDirects = 50;
-    const maxVisualVirals = 1500;
+    const maxVisualVirals = 1000;
 
-    // Calculate how many "Real Users" each dot represents
-    // If we have 100k users, and max 50 dots, each dot = 2000 users.
-    // But we want to animate the count growing.
-    
+    // Use a small fixed divisor to allow rapid initial growth visualization
+    const directDivisor = 1; 
+    const viralDivisor = 5; // Show 1 viral node per 5 real users to avoid clutter too fast
+
     // Logic: 
-    // 1. Calculate ideal node count (1 node per 100 users initially)
-    // 2. Clamp at maxVisualDirects
-    // 3. If clamped, increase node SIZE/BRIGHTNESS (handled in render loop via radius)
+    // 1. Calculate ideal node count based on fixed divisor
+    // 2. Clamp at maxVisualDirects (so it never reduces, just ceilings)
     
-    // We allow starting with just 1 node (don't clamp min to 3)
-    const targetDirectNodes = Math.min(Math.ceil(currentDirects / 100), maxVisualDirects);
-    const targetViralNodes = Math.min(Math.ceil(currentVirals / 50), maxVisualVirals);
+    const targetDirectNodes = Math.min(Math.ceil(currentDirects / directDivisor), maxVisualDirects);
+    const targetViralNodes = Math.min(Math.ceil(currentVirals / viralDivisor), maxVisualVirals);
+
+    // FORCE MINIMUM VISUALS: If we have directs, always show connected virals for effect
+    // (Even if math says 0, show 1-2 ghost virals if we have > 3 directs)
+    let finalViralNodes = Math.max(0, targetViralNodes);
+    if (targetDirectNodes > 2 && finalViralNodes === 0 && currentScenario !== 'micro') {
+        finalViralNodes = Math.floor(targetDirectNodes * 1.5); // Fallback: 1.5x directs
+    }
 
     // Update Visual Settings
     setSettings(prev => ({
         ...prev,
         directCount: Math.max(1, targetDirectNodes),
-        viralCount: Math.max(0, targetViralNodes),
+        viralCount: Math.max(0, finalViralNodes),
         // Activity increases with user count to spin faster
         activityLevel: Math.min(100, 10 + (currentDirects + currentVirals) / 2000)
     }));
@@ -375,6 +387,11 @@ export default function InkPayPrototype() {
 
   // --- DATA GENERATION ---
   useEffect(() => {
+    // PRESERVE STATE: We don't want to regenerate existing nodes to avoid flashing
+    const existingNodes = nodesRef.current;
+    const existingDirectMap = new Map(existingNodes.filter(n => n.type === 'direct').map(n => [n.id, n]));
+    const existingViralMap = new Map(existingNodes.filter(n => n.type === 'viral').map(n => [n.id, n]));
+
     const generated: Node[] = [];
     const names = ["Cloud", "Elon", "Satoshi", "Vibes", "Neo", "Trinity", "Morpheus", "Cipher", "Tank", "Dozer", "Switch", "Apoc"];
     
@@ -383,54 +400,108 @@ export default function InkPayPrototype() {
 
     // 1. Direct Nodes (Planets)
     for (let i = 0; i < settings.directCount; i++) {
-      // Weight logic: 20% variation range (0.8 to 1.2)
-      // This makes some nodes have ~50% more connections than the smallest ones
-      const weight = 0.8 + Math.random() * 0.4;
+      const id = `d-${i}`;
+      // Distribute evenly
       const angle = (i / settings.directCount) * (Math.PI * 2);
       
-      directNodeInfo.push({ index: i, angle, weight });
+      // Preserve or Create
+      const existing = existingDirectMap.get(id);
+      let weight = 0.8 + Math.random() * 0.4; // Re-roll weight is fine for new assignments
 
-      generated.push({
-        id: `d-${i}`,
-        type: 'direct',
-        angle,
-        radius: DIRECT_RADIUS,
-        value: Math.random() * 1000,
-        label: `@${names[i % names.length]}`,
-        lastActive: 0
-      });
+      if (existing) {
+        // Update angle to maintain even distribution as count changes
+        generated.push({
+            ...existing,
+            angle: angle 
+        });
+      } else {
+        generated.push({
+            id,
+            type: 'direct',
+            angle,
+            radius: DIRECT_RADIUS,
+            value: Math.random() * 1000,
+            label: `@${names[i % names.length]}`,
+            lastActive: 0
+        });
+      }
+      directNodeInfo.push({ index: i, angle, weight });
     }
 
     // Calculate total weight for normalization
     const totalWeight = directNodeInfo.reduce((sum, n) => sum + n.weight, 0);
 
+    // Helper to pick parent
+    const pickParent = () => {
+        let randomVal = Math.random() * totalWeight;
+        let selected = directNodeInfo[0];
+        for (const p of directNodeInfo) {
+            randomVal -= p.weight;
+            if (randomVal <= 0) {
+                selected = p;
+                break;
+            }
+        }
+        return selected;
+    };
+
     // 2. Viral Nodes (Moons)
     for (let i = 0; i < settings.viralCount; i++) {
-      // Weighted Random Parent Selection
-      let randomVal = Math.random() * totalWeight;
-      let selectedParent = directNodeInfo[0];
-      
-      for (const p of directNodeInfo) {
-          randomVal -= p.weight;
-          if (randomVal <= 0) {
-              selectedParent = p;
-              break;
-          }
-      }
+        const id = `v-${i}`;
+        const existing = existingViralMap.get(id);
 
-      const parentAngle = selectedParent.angle;
-      const offset = (Math.random() - 0.5) * 0.8; 
-      
-      generated.push({
-        id: `v-${i}`,
-        type: 'viral',
-        angle: parentAngle + offset,
-        radius: VIRAL_RADIUS + (Math.random() * 150 - 75),
-        value: Math.random() * 100,
-        parentId: `d-${selectedParent.index}`,
-        label: `@User${Math.floor(Math.random()*9000)}`,
-        lastActive: 0
-      });
+        if (existing) {
+            // Check if parent still exists
+            const parentIndexStr = existing.parentId?.split('-')[1];
+            const parentIndex = parentIndexStr ? parseInt(parentIndexStr) : -1;
+            const parentInfo = directNodeInfo.find(d => d.index === parentIndex);
+
+            if (parentInfo) {
+                // Parent exists! Update angle to follow parent using relativeOffset
+                let newAngle = existing.angle;
+                let relativeOffset = existing.relativeOffset;
+
+                if (relativeOffset !== undefined) {
+                    newAngle = parentInfo.angle + relativeOffset;
+                } else {
+                    // First run migration: Calculate offset from current state
+                    relativeOffset = existing.angle - parentInfo.angle;
+                    // Keep existing angle this frame to prevent jump, but store offset for next
+                }
+
+                generated.push({
+                    ...existing,
+                    angle: newAngle,
+                    relativeOffset
+                });
+            } else {
+                // Parent gone (rare), re-roll
+                const selectedParent = pickParent();
+                const offset = (Math.random() - 0.5) * 0.8;
+                generated.push({
+                    ...existing,
+                    parentId: `d-${selectedParent.index}`,
+                    angle: selectedParent.angle + offset,
+                    relativeOffset: offset
+                });
+            }
+        } else {
+            // NEW NODE
+            const selectedParent = pickParent();
+            const offset = (Math.random() - 0.5) * 0.8;
+            
+            generated.push({
+                id,
+                type: 'viral',
+                angle: selectedParent.angle + offset,
+                radius: VIRAL_RADIUS + (Math.random() * 150 - 75),
+                value: Math.random() * 100,
+                parentId: `d-${selectedParent.index}`,
+                relativeOffset: offset,
+                label: `@User${Math.floor(Math.random()*9000)}`,
+                lastActive: 0
+            });
+        }
     }
     nodesRef.current = generated;
   }, [settings]);
