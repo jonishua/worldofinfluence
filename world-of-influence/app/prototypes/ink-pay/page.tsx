@@ -176,6 +176,12 @@ export default function InkPayPrototype() {
   // Audio Engine Ref
   const audioRef = useRef<AudioEngine | null>(null);
 
+  const [settings, setSettings] = useState({
+    directCount: 12,
+    viralCount: 800,
+    activityLevel: 50 // 0-100
+  });
+
   // Refs for settings to avoid re-triggering simulation loop
   const settingsRef = useRef(settings);
 
@@ -218,12 +224,6 @@ export default function InkPayPrototype() {
   const [simMode, setSimMode] = useState<'manual' | 'dream'>('manual');
   const [timelineDay, setTimelineDay] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  
-  const [settings, setSettings] = useState({
-    directCount: 12,
-    viralCount: 800,
-    activityLevel: 50 // 0-100
-  });
 
   // --- DREAM SIMULATION LOGIC ---
   useEffect(() => {
