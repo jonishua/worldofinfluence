@@ -139,16 +139,76 @@ const DIRECT_RADIUS = 300;
 const VIRAL_RADIUS = 600;
 const ZOOM_SENSITIVITY = 0.001;
 
+// --- SCENARIOS ---
+type ScenarioId = 'micro' | 'nano' | 'macro' | 'mega' | 'titan';
+
+interface Scenario {
+    id: ScenarioId;
+    name: string;
+    label: string;
+    followers: string;
+    maxDirects: number;
+    maxVirals: number;
+    launchDuration: number; // Days to reach 40% of max
+}
+
+const SCENARIOS: Record<ScenarioId, Scenario> = {
+    micro: {
+        id: 'micro',
+        name: 'The Local Hero',
+        label: 'Micro',
+        followers: '5k',
+        maxDirects: 500,
+        maxVirals: 1500,
+        launchDuration: 60
+    },
+    nano: {
+        id: 'nano',
+        name: 'The Rising Star',
+        label: 'Nano',
+        followers: '50k',
+        maxDirects: 5000,
+        maxVirals: 15000,
+        launchDuration: 50
+    },
+    macro: {
+        id: 'macro',
+        name: 'The Trendsetter',
+        label: 'Macro',
+        followers: '250k',
+        maxDirects: 25000,
+        maxVirals: 50000,
+        launchDuration: 45
+    },
+    mega: {
+        id: 'mega',
+        name: 'The Icon (Nyjah)',
+        label: 'Mega',
+        followers: '1M',
+        maxDirects: 100000,
+        maxVirals: 150000,
+        launchDuration: 45
+    },
+    titan: {
+        id: 'titan',
+        name: 'The Titan',
+        label: 'Global',
+        followers: '10M',
+        maxDirects: 500000,
+        maxVirals: 1000000,
+        launchDuration: 30
+    }
+};
+
 // --- GROWTH LOGIC HELPER ---
-const calculateGrowth = (day: number) => {
-    // 1. Directs: Start at 1, Explosive to Day 45, then Linear to Year End
-    const maxDirects = 100000;
+const calculateGrowth = (day: number, scenarioId: ScenarioId) => {
+    const scenario = SCENARIOS[scenarioId];
+    const { maxDirects, maxVirals, launchDuration } = scenario;
+    
     let currentDirects = 1;
     
-    // Phase 1: The Launch (Day 0-45) -> Exponential to 40k
-    // This creates the "hockey stick" feeling
-    const launchDuration = 45;
-    const launchTarget = 40000;
+    // Phase 1: The Launch (Day 0-launchDuration) -> Exponential to 40% of max
+    const launchTarget = Math.floor(maxDirects * 0.4);
     
     if (day <= launchDuration) {
         if (day === 0) return { currentDirects: 1, currentVirals: 0 };
@@ -156,14 +216,13 @@ const calculateGrowth = (day: number) => {
         const progress = Math.pow(t, 3.5); // Steeper Cubic ease in
         currentDirects = 1 + Math.floor(launchTarget * progress);
     } else {
-        // Phase 2: The Sustain (Day 45-365) -> Linear to 100k
+        // Phase 2: The Sustain (Day 45-365) -> Linear to 100%
         const remainingTime = 365 - launchDuration;
         const progress = (day - launchDuration) / remainingTime;
         currentDirects = launchTarget + Math.floor((maxDirects - launchTarget) * progress);
     }
     
     // 2. Virals: Lagged start (Day 20)
-    const maxVirals = 150000;
     let currentVirals = 0;
     const viralStartDay = 20;
     
@@ -196,6 +255,8 @@ export default function InkPayPrototype() {
     viralCount: 800,
     activityLevel: 50 // 0-100
   });
+
+  const [currentScenario, setCurrentScenario] = useState<ScenarioId>('mega');
 
   // Refs for settings to avoid re-triggering simulation loop
   const settingsRef = useRef(settings);
@@ -252,7 +313,7 @@ export default function InkPayPrototype() {
             }
             return prev + 1;
         });
-    }, 200); // Slower simulation (1 day = 200ms) -> ~73 seconds for full year
+    }, 200); // Slower simulation
 
     return () => clearInterval(interval);
   }, [isPlaying, simMode]);
@@ -261,7 +322,7 @@ export default function InkPayPrototype() {
   useEffect(() => {
     if (simMode !== 'dream') return;
 
-    const { currentDirects, currentVirals } = calculateGrowth(timelineDay);
+    const { currentDirects, currentVirals } = calculateGrowth(timelineDay, currentScenario);
 
     // VISUAL SCALING: Super-Node Logic
     // Instead of clamping max nodes, we scale 'value' per node
@@ -997,13 +1058,52 @@ export default function InkPayPrototype() {
                         {/* DREAM SIM MODE */}
                         {simMode === 'dream' && (
                             <div className="space-y-6">
+                                {/* Scenario Selector */}
+                                <div className="space-y-2">
+                                    <div className="text-xs font-bold text-slate-300 uppercase tracking-widest">Select Tier</div>
+                                    <div className="grid grid-cols-5 gap-1">
+                                        {(Object.keys(SCENARIOS) as ScenarioId[]).map((id) => (
+                                            <button
+                                                key={id}
+                                                onClick={() => {
+                                                    setCurrentScenario(id);
+                                                    setTimelineDay(0);
+                                                    setBalance(0);
+                                                    setIsPlaying(true);
+                                                    setTransactions([]);
+                                                    // Reset comets visually
+                                                    cometsRef.current = [];
+                                                }}
+                                                className={`
+                                                    h-8 rounded text-[10px] font-bold uppercase transition-all
+                                                    ${currentScenario === id 
+                                                        ? 'bg-emerald-500 text-slate-900 shadow-[0_0_10px_rgba(0,200,5,0.4)]' 
+                                                        : 'bg-slate-800 text-slate-500 hover:bg-slate-700 hover:text-white'
+                                                    }
+                                                `}
+                                                title={SCENARIOS[id].name}
+                                            >
+                                                {SCENARIOS[id].label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div className="text-right text-[10px] text-emerald-400 font-mono">
+                                        {SCENARIOS[currentScenario].name}
+                                    </div>
+                                </div>
+
                                 {/* Timeline Control */}
                                 <div className="space-y-2">
                                     <div className="flex justify-between items-center text-xs text-slate-300">
                                         <span className="text-white font-bold">Timeline (Day {timelineDay})</span>
                                         <button 
                                             onClick={() => {
-                                                if (timelineDay >= 365) setTimelineDay(0);
+                                                if (timelineDay >= 365) {
+                                                    setTimelineDay(0);
+                                                    setBalance(0);
+                                                    setTransactions([]);
+                                                    cometsRef.current = [];
+                                                }
                                                 setIsPlaying(!isPlaying);
                                             }}
                                             className="text-emerald-400 hover:text-emerald-300 uppercase tracking-widest font-bold"
@@ -1029,19 +1129,19 @@ export default function InkPayPrototype() {
                                         <div className="text-[10px] text-slate-500 uppercase">Est. Directs</div>
                                         {/* Show Calculated Real Value, not Visual */}
                                         <div className="text-lg font-mono text-white">
-                                            {calculateGrowth(timelineDay).currentDirects.toLocaleString()}
+                                            {calculateGrowth(timelineDay, currentScenario).currentDirects.toLocaleString()}
                                         </div>
                                     </div>
                                     <div>
                                         <div className="text-[10px] text-slate-500 uppercase">Est. Virals</div>
                                         <div className="text-lg font-mono text-emerald-400">
-                                            {calculateGrowth(timelineDay).currentVirals.toLocaleString()}
+                                            {calculateGrowth(timelineDay, currentScenario).currentVirals.toLocaleString()}
                                         </div>
                                     </div>
                                 </div>
                                 
                                 <div className="text-[10px] text-slate-500 text-center italic">
-                                    "Nyjah Huston" Scenario (1M Followers)
+                                    Scenario: {SCENARIOS[currentScenario].followers} Followers
                                 </div>
                             </div>
                         )}
