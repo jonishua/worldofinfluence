@@ -125,6 +125,15 @@ interface Transaction {
   timestamp: number;
 }
 
+interface Comet {
+  id: string;
+  fromNodeId: string;
+  targetNodeId?: string; // For viral -> direct
+  startX: number;
+  startY: number;
+  timestamp: number;
+}
+
 // --- CONFIG ---
 const DIRECT_RADIUS = 300;
 const VIRAL_RADIUS = 600;
@@ -175,6 +184,12 @@ export default function InkPayPrototype() {
   
   // Audio Engine Ref
   const audioRef = useRef<AudioEngine | null>(null);
+  
+  // Comet Ref (Canvas only)
+  const cometsRef = useRef<Comet[]>([]);
+  // UI Throttling
+  const pendingUiData = useRef({ amount: 0, count: 0 });
+  const lastUiUpdate = useRef(0);
 
   const [settings, setSettings] = useState({
     directCount: 12,
@@ -406,19 +421,49 @@ export default function InkPayPrototype() {
                     audioRef.current?.playPing();
                 }
 
-                const newTx: Transaction = {
+                // Create Comet (Visual only)
+                const newComet: Comet = {
                     id: Math.random().toString(36).substr(2, 9),
                     fromNodeId: sourceNode.id,
-                    amount,
+                    startX: 0, // Will be set in render loop or here? 
+                    // Note: Calculating physics position here is hard without transform context.
+                    // We'll let the render loop resolve the position, we just need the IDs.
+                    startY: 0,
                     timestamp: Date.now(),
                 };
+                cometsRef.current.push(newComet);
 
-                setTransactions(prev => [...prev, newTx]);
-                setBalance(prev => prev + amount);
+                // Accumulate for UI
+                pendingUiData.current.amount += amount;
+                pendingUiData.current.count += 1;
 
-                setTimeout(() => {
-                    setTransactions(prev => prev.filter(t => t.id !== newTx.id));
-                }, 3000);
+                // Throttle UI Updates (Every 150ms)
+                const now = Date.now();
+                if (now - lastUiUpdate.current > 150) {
+                    const totalAmount = pendingUiData.current.amount;
+                    const count = pendingUiData.current.count;
+                    
+                    if (totalAmount > 0) {
+                        setBalance(prev => prev + totalAmount);
+                        
+                        const newTx: Transaction = {
+                            id: Math.random().toString(36).substr(2, 9),
+                            fromNodeId: count > 1 ? `Multiple (${count})` : sourceNode.id,
+                            amount: totalAmount,
+                            timestamp: now,
+                        };
+                        
+                        setTransactions(prev => [...prev, newTx]);
+                        
+                        // Clear old transactions from list to keep DOM light
+                        setTimeout(() => {
+                            setTransactions(prev => prev.filter(t => t.id !== newTx.id));
+                        }, 3000);
+                    }
+                    
+                    pendingUiData.current = { amount: 0, count: 0 };
+                    lastUiUpdate.current = now;
+                }
             }
         }
 
@@ -475,7 +520,7 @@ export default function InkPayPrototype() {
       
       // AUDIO SYNC: Pulse the background grid or connection opacity based on recent activity
       // We can use transactions length as a proxy for "Energy"
-      const energy = Math.min(transactions.length / 5, 1); // 0 to 1 based on activity
+      const energy = Math.min(cometsRef.current.length / 5, 1); // 0 to 1 based on activity
 
       nodesRef.current.forEach(node => {
         // Calculate Base Position
@@ -633,23 +678,23 @@ export default function InkPayPrototype() {
         }
       });
 
-      // 4. Draw Transactions (Update to use render positions?)
-      // Since tx is interpolation, we can just use the computed positions of the nodes if we can find them.
-      // But we just computed them in the loop.
-      // Let's use the node's current computed render position for the start/end points to make comets follow the physics!
-      transactions.forEach(tx => {
-        const age = now - tx.timestamp;
+      // 4. Draw Transactions (Comets from Ref)
+      // Filter out old comets first
+      cometsRef.current = cometsRef.current.filter(c => now - c.timestamp < 1500);
+
+      cometsRef.current.forEach(comet => {
+        const age = now - comet.timestamp;
         const duration = 1500;
         const progress = Math.min(age / duration, 1);
         
-        const node = nodesRef.current.find(n => n.id === tx.fromNodeId);
+        const node = nodesRef.current.find(n => n.id === comet.fromNodeId);
         if (!node) return;
 
         // Start from Node's current physics position
         const nx = (node as any)._renderX;
         const ny = (node as any)._renderY;
         
-        if (nx === undefined) return; // Should not happen
+        if (nx === undefined) return; 
 
         let targetX = 0, targetY = 0;
         let startX = nx, startY = ny;
