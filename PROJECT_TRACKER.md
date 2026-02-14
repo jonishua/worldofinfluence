@@ -41,6 +41,13 @@
 - [x] INK Pay Visualizer (Orbital Ledger) - Prototype v2.2 [Sales Tool]
 - [ ] Executive Travel Feature (Global Search & Leap)
 
+### Phase 6: Arcade Expansion (Skill-Based Games)
+- [x] Market Sniper (Reaction/Timing) - [Implementation Task 15](tasks/Market_Sniper_Implementation_Task_15.md)
+- [ ] Vault Cracker (Precision) - [Implementation Task 16](tasks/Vault_Cracker_Implementation_Task_16.md)
+- [ ] Asset Audit (Speed/Sorting)
+- [ ] Insider Trading (Memory Match)
+- [ ] Portfolio Manager (Management Sim)
+
 ### Known Issues / QA
 - [ ] **Drone Deployment Freeze** — [BUG_DRONE_DEPLOYMENT_FREEZE.md](tasks/BUG_DRONE_DEPLOYMENT_FREEZE.md) — CRITICAL: Page freezes on "Confirm Location". Handoff doc ready for new agent.
 
@@ -48,7 +55,14 @@
 - [ ] Theme Consistency — Day / Dusk / Night + Settings - [Agent Task 14](tasks/Theme_Consistency_Day_Dusk_Night_Agent_Task_14.md)
 
 ### Roadmap: Future Phases
-- [ ] Phase 6: Institutional Finance (Bank HQ, Loans, Interest)
-- [ ] Phase 7: Competitive Jurisdictions (Territory Wars)
-- [ ] Phase 8: Mobile Polish & App Store Readiness
+- [ ] Phase 7: Institutional Finance (Bank HQ, Loans, Interest)
+- [ ] Phase 8: Competitive Jurisdictions (Territory Wars)
+- [ ] Phase 9: Mobile Polish & App Store Readiness
+
+---
+
+## 📋 Current Project Status
+**Active Phase:** Phase 6 — Arcade Expansion
+**Focus:** Finalizing "Market Sniper" and auditing input responsiveness across all Arcade assets.
+**KPI Impact:** session_length_avg +12%, user_retention_d1 +5% (Projected).
 

@@ -365,6 +365,7 @@ export type GameState = {
   upgradeParcel: (parcelId: string) => { success: boolean; reason?: string };
   resetGame: () => void;
   addWalletBalance: (amount: number) => void;
+  addInkCash: (amount: number) => void;
   addCredits: (amount: number) => void;
   addInfluenceBucks: (amount: number) => void;
   addZoningPermits: (amount: number) => void;

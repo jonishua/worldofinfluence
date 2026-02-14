@@ -71,15 +71,24 @@ Reference class names:
   - Legendary reveals: burst + continuous top rain while reveal is open.
   - Stop confetti loops when the reveal closes.
 
-## 11. Do / Don’t Summary
+## 11. Skill-Based Interaction Standards
+To ensure 60fps "Game Feel" and prevent input lag on mobile/web:
+- **Immediate Input:** Always use `onPointerDown` instead of `onClick` for primary game actions (e.g., "SELL", "HIT", "SHOOT").
+- **Touch Optimization:** Apply `touch-manipulation` and `select-none` to interactive game elements to bypass browser delays.
+- **State Bypassing:** Use React `refs` to track game state (like `linePosition` or `gameState`) within the `requestAnimationFrame` loop to prevent stale closure issues.
+- **Visual Confirmation:** Every input MUST trigger a visual response (e.g., button flash, tap line) within 16ms (1 frame), even if the action is a "miss".
+
+## 12. Do / Don’t Summary
 **Do**
 - Use rounded rectangles and consistent spacing.
 - Keep monetary UI monospaced.
 - Anchor slide-ups to the bottom with shared animation.
 - Prioritize clarity and trust signaling.
+- Use `onPointerDown` for high-precision game interactions.
 
 **Don’t**
 - Use bubbly or playful UI motion.
 - Overuse pill shapes for large containers.
 - Hide close actions in ambiguous icons.
 - Use confetti for routine actions; reserve for Epic/Legendary reveals.
+- Depend on `onClick` for time-sensitive mechanics.

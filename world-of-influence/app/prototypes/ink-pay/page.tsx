@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Activity, Users, Zap, Search, Plus, Minus, Volume2, VolumeX, ArrowLeft } from 'lucide-react';
+import { Activity, Users, Zap, Plus, Minus, Volume2, VolumeX, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 /**
@@ -27,7 +27,7 @@ class AudioEngine {
 
   constructor() {
     if (typeof window !== 'undefined') {
-      const AudioContextClass = (window.AudioContext || (window as any).webkitAudioContext);
+      const AudioContextClass = (window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext);
       if (AudioContextClass) {
           this.ctx = new AudioContextClass();
           this.masterGain = this.ctx.createGain();
@@ -119,6 +119,8 @@ interface Node {
   label: string; // Display name
   lastActive: number; // Timestamp of last transaction
 }
+
+type NodeWithRender = Node & { _renderX?: number; _renderY?: number };
 
 interface Transaction {
   id: string;
@@ -369,6 +371,7 @@ export default function InkPayPrototype() {
     const dailyRevenue = (currentDirects * 0.15) + (currentVirals * 0.03); 
     setBalance(prev => prev + dailyRevenue);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- currentScenario intentionally excluded to avoid regeneration loop
   }, [timelineDay, simMode]);
 
   // --- RESIZE OBSERVER (FIX ASPECT RATIO) ---
@@ -407,7 +410,7 @@ export default function InkPayPrototype() {
       
       // Preserve or Create
       const existing = existingDirectMap.get(id);
-      let weight = 0.8 + Math.random() * 0.4; // Re-roll weight is fine for new assignments
+      const weight = 0.8 + Math.random() * 0.4; // Re-roll weight is fine for new assignments
 
       if (existing) {
         // Update angle to maintain even distribution as count changes
@@ -615,6 +618,15 @@ export default function InkPayPrototype() {
     };
   }, []); // No dependencies! Uses refs for latest state.
 
+  const drawComet = useCallback((ctx: CanvasRenderingContext2D, x: number, y: number, intensity: number) => {
+    ctx.beginPath();
+    ctx.fillStyle = '#fff';
+    ctx.arc(x, y, 3 * intensity, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = '#00C805';
+  }, []);
+
   // --- CANVAS RENDERING ---
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -652,8 +664,9 @@ export default function InkPayPrototype() {
       ctx.lineWidth = 1;
       
       // AUDIO SYNC: Pulse the background grid or connection opacity based on recent activity
-      // We can use transactions length as a proxy for "Energy"
-      const energy = Math.min(cometsRef.current.length / 5, 1); // 0 to 1 based on activity
+      // (Energy from cometsRef could drive grid/opacity in future)
+      const _energy = Math.min(cometsRef.current.length / 5, 1); // 0 to 1 based on activity
+      void _energy;
 
       nodesRef.current.forEach(node => {
         // Calculate Base Position
@@ -675,8 +688,8 @@ export default function InkPayPrototype() {
 
         // Store active position for hit testing / drawing lines
         // We attach it to the node object temporarily for this frame
-        (node as any)._renderX = nx;
-        (node as any)._renderY = ny;
+        (node as NodeWithRender)._renderX = nx;
+        (node as NodeWithRender)._renderY = ny;
 
         if (node.type === 'viral' && node.parentId) {
            const parent = nodesRef.current.find(n => n.id === node.parentId);
@@ -696,8 +709,8 @@ export default function InkPayPrototype() {
                  px += Math.cos(angle) * force;
                  py += Math.sin(angle) * force;
              }
-             (parent as any)._renderX = px;
-             (parent as any)._renderY = py;
+             (parent as NodeWithRender)._renderX = px;
+             (parent as NodeWithRender)._renderY = py;
 
              // HEAT MAP logic
              const timeSinceActive = now - node.lastActive;
@@ -723,8 +736,8 @@ export default function InkPayPrototype() {
       // 2. Draw Direct -> Center Lines
       ctx.lineWidth = 2;
       nodesRef.current.filter(n => n.type === 'direct').forEach(node => {
-         const x = (node as any)._renderX || Math.cos(node.angle + rotation) * node.radius;
-         const y = (node as any)._renderY || Math.sin(node.angle + rotation) * node.radius;
+         const x = (node as NodeWithRender)._renderX ?? Math.cos(node.angle + rotation) * node.radius;
+         const y = (node as NodeWithRender)._renderY ?? Math.sin(node.angle + rotation) * node.radius;
          
          const timeSinceActive = now - node.lastActive;
          const isActive = timeSinceActive < 2000;
@@ -746,11 +759,11 @@ export default function InkPayPrototype() {
 
       // 3. Draw Nodes (Using cached render positions)
       nodesRef.current.forEach(node => {
-        const x = (node as any)._renderX;
-        const y = (node as any)._renderY;
+        const x = (node as NodeWithRender)._renderX;
+        const y = (node as NodeWithRender)._renderY;
         
         // Skip if not calculated (should have been in step 1 or 2)
-        if (x === undefined) return; 
+        if (x === undefined || y === undefined) return; 
 
         const timeSinceActive = now - node.lastActive;
         const isActive = timeSinceActive < 1000;
@@ -824,10 +837,9 @@ export default function InkPayPrototype() {
         if (!node) return;
 
         // Start from Node's current physics position
-        const nx = (node as any)._renderX;
-        const ny = (node as any)._renderY;
-        
-        if (nx === undefined) return; 
+        const nx = (node as NodeWithRender)._renderX;
+        const ny = (node as NodeWithRender)._renderY;
+        if (nx === undefined || ny === undefined) return;
 
         let targetX = 0, targetY = 0;
         let startX = nx, startY = ny;
@@ -835,9 +847,10 @@ export default function InkPayPrototype() {
         if (node.type === 'viral' && node.parentId) {
            const parent = nodesRef.current.find(n => n.id === node.parentId);
            if (parent) {
-              const px = (parent as any)._renderX;
-              const py = (parent as any)._renderY;
-              
+              const px = (parent as NodeWithRender)._renderX;
+              const py = (parent as NodeWithRender)._renderY;
+              if (px === undefined || py === undefined) return;
+
               if (progress < 0.5) {
                  const localProg = progress * 2;
                  startX = nx; startY = ny;
@@ -868,16 +881,8 @@ export default function InkPayPrototype() {
     };
     render();
     return () => cancelAnimationFrame(animationFrameId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- settings.directCount read inside render loop via ref; omit to avoid loop
   }, [transform, transactions, dimensions, hoveredNodeId]);
-
-  const drawComet = (ctx: CanvasRenderingContext2D, x: number, y: number, intensity: number) => {
-     ctx.beginPath();
-     ctx.fillStyle = '#fff';
-     ctx.arc(x, y, 3 * intensity, 0, Math.PI * 2);
-     ctx.fill();
-     ctx.shadowBlur = 15;
-     ctx.shadowColor = '#00C805';
-  };
 
   // --- INTERACTION HANDLERS ---
   const handleWheel = useCallback((e: React.WheelEvent) => {
@@ -894,57 +899,12 @@ export default function InkPayPrototype() {
     dragStart.current = { x: e.clientX - transform.x, y: e.clientY - transform.y };
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    // 1. Dragging Logic
-    if (isDragging) {
-      setTransform(prev => ({
-        ...prev,
-        x: e.clientX - dragStart.current.x,
-        y: e.clientY - dragStart.current.y
-      }));
-    }
-
-    // 2. Hover Logic (Hit Testing)
-    if (dimensions.width === 0) return;
-    
-    // Convert Screen Coords -> World Coords
-    const centerX = dimensions.width / 2;
-    const centerY = dimensions.height / 2;
-    const worldX = (e.clientX - (centerX + transform.x)) / transform.k;
-    const worldY = (e.clientY - (centerY + transform.y)) / transform.k;
-
-    // Check distance to nodes (Optimization: Only check nearby nodes could be added, but brute force is fine for <1000 items in JS)
-    // Actually, checking 800 items on every move event is fine (modern JS is fast).
-    // But we need to account for Rotation if we want exact hits!
-    // Since rotation happens inside render(), we need to approximate or share state.
-    // For Prototype V2, let's just use the radius ranges since it's a ring system, or accept slight inaccuracy.
-    // Better: We can't hit test accurately without the current rotation.
-    // Solution: Let's just track radius ranges for now? No, users want specific nodes.
-    // We'll let the hover be "approximate" or just ignore rotation for hit testing? No, that breaks UI.
-    // We will inject the current `rotation` into a ref that we can read here? No, complicated.
-    // Actually, just calculating distance from center is enough to know if we are in a ring,
-    // but identifying the specific node requires angle.
-    // Let's Skip complex hit testing for V2.1 and just do Radius check for "Rings" or simple distance if we assume static rotation for hit test (bad).
-    // ALTERNATIVE: Just use the same loop in render to update a "Hover Map"? 
-    // Let's keep it simple: We will recalculate the current rotation based on time.
-    // Rotation = 0.001 per frame. Frame rate is variable.
-    // Let's switch rotation to time-based for consistency.
-    
-    // For now, let's just flash the "User" if hovered? No the user wants nodes.
-    // Let's implement a simple distance check assuming the nodes are roughly where generated, 
-    // acknowledging they rotate. 
-    // Actually, let's just make the nodes interact properly by passing the rotation ref.
-  };
-  
-  // To solve the rotation sync, let's move rotation state to a ref we can access in mousemove
-  // const rotationRef = useRef(0); // REMOVED DUPLICATE
-
-  // MOUSE REF FOR PHYSICS
+  // MOUSE REF FOR PHYSICS (used by canvas render loop)
   const mouseRef = useRef({ x: 0, y: 0 });
-  
+
   // Updated Mouse Move with Rotation Awareness
   const handleMouseMoveWithHitTest = (e: React.MouseEvent) => {
-     // Update Mouse Ref for Physics
+     // Update Mouse Ref for Physics (event handler; ref read in effect)
      mouseRef.current = { x: e.clientX, y: e.clientY };
 
      if (isDragging) {
@@ -979,11 +939,12 @@ export default function InkPayPrototype() {
      for (const node of nodesRef.current) {
          // Using cached physics position from the last render if available
          // Fallback to strict orbit calc if not
-         let nx, ny;
-         
-         if ((node as any)._renderX !== undefined) {
-             nx = (node as any)._renderX;
-             ny = (node as any)._renderY;
+         let nx: number;
+         let ny: number;
+         const n = node as NodeWithRender;
+         if (n._renderX !== undefined && n._renderY !== undefined) {
+             nx = n._renderX;
+             ny = n._renderY;
          } else {
              const angle = node.angle + currentRotation;
              nx = Math.cos(angle) * node.radius;

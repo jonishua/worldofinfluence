@@ -18,6 +18,7 @@ export interface EconomySlice {
   boostDurationMs: number;
   isBoostActive: (timestamp?: number) => boolean;
   addWalletBalance: (amount: number) => void;
+  addInkCash: (amount: number) => void;
   addCredits: (amount: number) => void;
   addInfluenceBucks: (amount: number) => void;
   addZoningPermits: (amount: number) => void;
@@ -44,6 +45,10 @@ export const createEconomySlice: StateCreator<GameState, [], [], EconomySlice> =
   isBoostActive: (timestamp = Date.now()) => selectIsBoostActive(get(), timestamp),
 
   addWalletBalance: (amount) => {
+    set((state) => ({ walletBalance: state.walletBalance + amount }));
+    debounceSync(get().syncToCloud);
+  },
+  addInkCash: (amount) => {
     set((state) => ({ walletBalance: state.walletBalance + amount }));
     debounceSync(get().syncToCloud);
   },

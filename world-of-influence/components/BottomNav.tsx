@@ -15,12 +15,12 @@ import {
 } from "@/store/useGameStore";
 
 type BottomNavProps = {
-  onOpenTerminal?: () => void;
+  onOpenArcade?: () => void;
   onOpenShop?: () => void;
-  isTerminalOpen?: boolean;
+  isArcadeOpen?: boolean;
 };
 
-export default function BottomNav({ onOpenTerminal, onOpenShop, isTerminalOpen = false }: BottomNavProps) {
+export default function BottomNav({ onOpenArcade, onOpenShop, isArcadeOpen = false }: BottomNavProps) {
   const [isCheatOpen, setIsCheatOpen] = useState(false);
   const [inkAmount, setInkAmount] = useState(50);
   const [influenceAmount, setInfluenceAmount] = useState(50);
@@ -427,11 +427,11 @@ export default function BottomNav({ onOpenTerminal, onOpenShop, isTerminalOpen =
         </button>
         <button
           type="button"
-          onClick={() => onOpenTerminal?.()}
+          onClick={() => onOpenArcade?.()}
           className="flex flex-col items-center gap-1 text-[var(--text-muted)] transition-colors hover:text-[var(--accent-color)]"
         >
-          <Gamepad2 className={`h-5 w-5 ${isTerminalOpen ? "text-[var(--accent-color)]" : ""}`} />
-          <span className={`text-[10px] uppercase tracking-[0.2em] ${isTerminalOpen ? "text-[var(--accent-color)]" : ""}`}>Arcade</span>
+          <Gamepad2 className={`h-5 w-5 ${isArcadeOpen ? "text-[var(--accent-color)]" : ""}`} />
+          <span className={`text-[10px] uppercase tracking-[0.2em] ${isArcadeOpen ? "text-[var(--accent-color)]" : ""}`}>Arcade</span>
         </button>
         <div className="flex flex-col items-center gap-1 text-[var(--accent-color)]">
           <Map className="h-6 w-6" />

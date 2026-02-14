@@ -285,6 +285,7 @@ export default function PrototypePage() {
       spread: 70,
       origin: { y: 0.6 },
       colors: ["#00C805", "#39FF14", "#FFFFFF"],
+      zIndex: 10000,
     });
     setTimeout(() => setIsSuccess(false), 3000);
   };

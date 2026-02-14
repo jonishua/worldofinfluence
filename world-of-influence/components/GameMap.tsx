@@ -87,6 +87,7 @@ function useSmoothedLocation(target: LatLng) {
 function AutoCenter({
   center,
   isUserInteracting,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- reserved for future auto-center behavior
   satelliteMode: _satelliteMode,
   droneStatus,
   isTransitioning,

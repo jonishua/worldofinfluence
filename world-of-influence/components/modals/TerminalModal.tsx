@@ -86,6 +86,7 @@ export default function TerminalModal({ isOpen, onClose }: TerminalModalProps) {
           spread: 60,
           origin: { y: 0.6 },
           colors: ["#00C805", "#39FF14"],
+          zIndex: 10000,
         });
       } else if (tier === "high" || tier === "jackpot" || tier === "lucky") {
         // High/Jackpot Win: Screen shake, large confetti, celebration haptic
@@ -97,6 +98,7 @@ export default function TerminalModal({ isOpen, onClose }: TerminalModalProps) {
           spread: 70,
           origin: { y: 0.6 },
           colors: ["#00C805", "#39FF14"],
+          zIndex: 10000,
         });
       }
     },
