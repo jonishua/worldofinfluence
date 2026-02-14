@@ -170,11 +170,92 @@ export default function InkPayPrototype() {
   const nodesRef = useRef<Node[]>([]);
   
   const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [simMode, setSimMode] = useState<'manual' | 'dream'>('manual');
+  const [timelineDay, setTimelineDay] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  
   const [settings, setSettings] = useState({
     directCount: 12,
     viralCount: 800,
     activityLevel: 50 // 0-100
   });
+
+  // --- DREAM SIMULATION LOGIC ---
+  useEffect(() => {
+    if (!isPlaying || simMode !== 'dream') return;
+
+    const interval = setInterval(() => {
+        setTimelineDay(prev => {
+            if (prev >= 365) {
+                setIsPlaying(false);
+                return 365;
+            }
+            return prev + 1;
+        });
+    }, 50); // Speed of simulation (1 day = 50ms)
+
+    return () => clearInterval(interval);
+  }, [isPlaying, simMode]);
+
+  // Update Settings based on Timeline
+  useEffect(() => {
+    if (simMode !== 'dream') return;
+
+    // Growth Curve Logic (Nyjah 1M Scenario)
+    // 10% Conversion = 100k Directs
+    // 1.5x Virality = 150k Virals
+    
+    // Directs: S-Curve (Logistic)
+    // Starts fast (The Drop), plateaus
+    const maxDirects = 100000;
+    const directProgress = 1 / (1 + Math.exp(-0.1 * (timelineDay - 20))); // Midpoint at day 20
+    const currentDirects = Math.floor(maxDirects * directProgress);
+
+    // Virals: Exponential Lagged
+    // Starts after Day 30
+    const maxVirals = 150000;
+    let viralProgress = 0;
+    if (timelineDay > 30) {
+        viralProgress = Math.pow((timelineDay - 30) / 335, 2); // Quadratic growth
+    }
+    const currentVirals = Math.floor(maxVirals * viralProgress);
+
+    // Calculate Balance (Recurring Revenue)
+    // ARPU: $50/yr for Direct, $10/yr for Viral
+    // Daily Rev = (Directs * 50 + Virals * 10) / 365
+    // We accumulated balance over time.
+    // Ideally we'd sum it up, but for scrubbing we can approximate integral.
+    // Simpler: Just set Balance = (Area under curve) * rate.
+    // For visual impact, let's just make it a function of current users * time.
+    // Total Revenue = (AvgUsers * Day) * DailyRate?
+    // Let's keep it cumulative for the "Odometer" feel.
+    // We'll just add to balance in the loop below.
+    
+    // VISUAL SCALING: Clamp for rendering
+    // We can't render 100k nodes. Max 2000.
+    // Directs: Max 24 visually.
+    // Virals: Max 2000 visually.
+    
+    const visualDirects = Math.min(Math.ceil(currentDirects / 4000), 24); // Scale down
+    const visualVirals = Math.min(Math.ceil(currentVirals / 75), 2000); 
+
+    // Update Visual Settings (Clamped)
+    // We store the REAL numbers in a separate ref or just use them for display
+    // Here we update the settings that drive the RENDER loop
+    setSettings(prev => ({
+        ...prev,
+        directCount: Math.max(3, visualDirects),
+        viralCount: Math.max(100, visualVirals),
+        // Activity increases with user count
+        activityLevel: Math.min(100, 10 + (currentDirects + currentVirals) / 2500)
+    }));
+
+    // Update Balance (Accumulated)
+    // We need to add daily revenue for THIS day.
+    const dailyRevenue = (currentDirects * 0.15) + (currentVirals * 0.03); // $50/yr / 365 ~= 0.15
+    setBalance(prev => prev + dailyRevenue);
+
+  }, [timelineDay, simMode]);
 
   // --- RESIZE OBSERVER (FIX ASPECT RATIO) ---
   useEffect(() => {
