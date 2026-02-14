@@ -31,3 +31,8 @@ A fintech strategy game where players move in the real world to capture opportun
 - Primary color: Growth Green (#00C805).
 - Backgrounds: Slate (#1F2937) and white.
 - Currency values use a monospaced font.
+
+## 6. Prototypes & Sales Tools
+- **INK Pay Visualizer (Orbital Ledger):** A high-fidelity "dream simulation" tool used to demonstrate the viral growth potential of the INK ID connection system.
+  - **Features:** Solar system metaphor (Sun=User, Planets=Directs, Moons=Virals), audio-reactive pulse, physics-based interaction, and deterministic growth scenarios (Micro to Titan).
+  - **Access:** Accessible via the "INK PAY" button in the bottom navigation.

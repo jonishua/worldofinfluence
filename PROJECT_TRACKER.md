@@ -38,6 +38,7 @@
 - [x] Tactical Drone Deployment (10-mile tether + State Machine) - [Agent Task 10](tasks/Tactical_Drone_Deployment_10.md)
 - [x] Tactical Drone Refinement & Juice (Heatmap, Audio, Micro-interactions) - [Agent Task 11](tasks/Tactical_Drone_Deployment_Refinement_11.md)
 - [x] CI/CD Protocol: Stabilized production build and pushed to live.
+- [x] INK Pay Visualizer (Orbital Ledger) - Prototype v2.2 [Sales Tool]
 - [ ] Executive Travel Feature (Global Search & Leap)
 
 ### Known Issues / QA
