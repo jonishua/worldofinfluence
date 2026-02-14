@@ -277,7 +277,19 @@ To force daily retention without sacrificing the satisfaction of "watching the n
   * **Merchant Program:** Users link a real-world credit card. Spending at partners (Starbucks, etc.) earns **INK Cash** per dollar spent.  
     * *Psychology: This connects the game economy to the real world, providing a "Found Money" feel like Acorns.*
 
-## **6\. Retention Systems ("The Glue")**
+## **9\. Prototypes & Sales Tools**
+   464|
+   465|### **9.1 INK Pay Visualizer ("Orbital Ledger")**
+   466|
+   467|* **Purpose:** A high-fidelity, "living data" visualization tool used during sales conversations to demonstrate the viral power of the INK ID connection system.
+   468|* **Access:** Accessible via the "INK PAY" button in the main bottom navigation.
+   469|* **Visual Metaphor:** Solar System.
+   470|  * **Sun:** The User.
+   471|  * **Planets:** Direct Connections (Level 1).
+   472|  * **Moons:** Viral Connections (Level 2+).
+   473|* **Simulations:** Includes "Dream Sim" scenarios (Micro to Titan) to model potential earnings over 365 days.
+   474|
+   475|## **10\. Retention Systems ("The Glue")**
 
 ### **6.1 Daily Login Streak**
 
@@ -459,4 +471,16 @@ A mass-market "Battle Pass" designed for active players who enjoy the mini-games
 
 1. **"Ad-Free Boost":** Activate the 30x Rent Boost without watching a video ad (Limit: 3 times/day).  
 2. **"Extended Escrow":** Increases Escrow timer from 4 hours to **8 hours** (Sleep through the night without losing rent).
+
+## **9\. Prototypes & Sales Tools**
+
+### **9.1 INK Pay Visualizer ("Orbital Ledger")**
+
+* **Purpose:** A high-fidelity, "living data" visualization tool used during sales conversations to demonstrate the viral power of the INK ID connection system.
+* **Access:** Accessible via the "INK PAY" button in the main bottom navigation.
+* **Visual Metaphor:** Solar System.
+  * **Sun:** The User.
+  * **Planets:** Direct Connections (Level 1).
+  * **Moons:** Viral Connections (Level 2+).
+* **Simulations:** Includes "Dream Sim" scenarios (Micro to Titan) to model potential earnings over 365 days.
 

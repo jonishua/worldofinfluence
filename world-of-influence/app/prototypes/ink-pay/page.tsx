@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Activity, Users, Zap, Search, Plus, Minus, Volume2, VolumeX } from 'lucide-react';
+import { Activity, Users, Zap, Search, Plus, Minus, Volume2, VolumeX, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 
 /**
  * PROTOTYPE: INK PAY - ORBITAL LEDGER (v2.2)
@@ -1018,6 +1019,13 @@ export default function InkPayPrototype() {
           <div>
             <h1 className="text-xl font-bold tracking-tight text-white leading-none">INK<span className="text-emerald-400">PAY</span></h1>
             <p className="text-[10px] text-slate-400 font-mono tracking-widest uppercase mt-1">Living Network v0.2</p>
+            <Link 
+              href="/" 
+              className="flex items-center gap-1 text-[10px] text-slate-500 hover:text-white uppercase tracking-widest mt-2 transition-colors group"
+            >
+              <ArrowLeft size={12} className="group-hover:-translate-x-1 transition-transform" />
+              Back to Game
+            </Link>
           </div>
         </div>
 

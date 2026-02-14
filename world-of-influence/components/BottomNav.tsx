@@ -1,7 +1,8 @@
  "use client";
 
-import { Plus, Sparkles, Map, ShoppingBag, Wallet, Gamepad2 } from "lucide-react";
+import { Plus, Sparkles, Map, ShoppingBag, Wallet, Gamepad2, Activity } from "lucide-react";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
 import { 
@@ -440,6 +441,13 @@ export default function BottomNav({ onOpenTerminal, onOpenShop, isTerminalOpen =
           <Wallet className="h-5 w-5" />
           <span className="text-[10px] uppercase tracking-[0.2em]">Wallet</span>
         </div>
+        <Link 
+          href="/prototypes/ink-pay" 
+          className="flex flex-col items-center gap-1 text-[var(--text-muted)] transition-colors hover:text-[var(--accent-color)]"
+        >
+          <Activity className="h-5 w-5" />
+          <span className="text-[10px] uppercase tracking-[0.2em] whitespace-nowrap">INK PAY</span>
+        </Link>
 
         <button
           type="button"
